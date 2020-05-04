@@ -1,0 +1,3 @@
+[submodule "vendor/whatismyip"]
+	path = vendor/whatismyip
+	url = gogs@gogs.mb:linux-config/whatismyip.git
