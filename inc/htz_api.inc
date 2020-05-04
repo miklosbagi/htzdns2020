@@ -1,6 +1,24 @@
 ### The BASH API for Hetzner
 ###
 
+### Catch Error and explain
+### expects error code, returns description.
+function htz_error_translator {
+  err_desc=""
+  case $1 in
+  200 ) err_desc="Successful"; return ;;
+  401 ) err_desc="Unauthorized" ;;
+  403 ) err_desc="Forbidden" ;;
+  404 ) err_desc="Not found" ;;
+  422 ) err_desc="Unprocessable entry" ;;
+  esac
+  shift
+  return 1;
+}
+
+
+
+
 ###
 ### The Records "Class" :>
 ###
@@ -56,14 +74,4 @@ function htz_validate_zone_errors {
 ### Error handlers "Class"
 ###
 
-### Catch Error:
-### 200: no error, that's a success
-### 401: Unauthorized
-### 403: Forbidden
-### 404: Not found
-### 422: Unprocessable entry
-
-function htz_catch_error {
-   echo "Catch Error: $1"
-}
 

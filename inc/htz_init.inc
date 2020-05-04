@@ -1,5 +1,13 @@
 ### htzdns init functions
 
+# Git submodules & vendor dependencies to be mapped:
+_VENDOR_DEPENDENCIES="whatismyip/whatismyip.sh
+"
+
+# New line string
+nl="
+"
+
 # simple out msg.
 function _SAY { echo -ne "$1\n"; }
 function _ERR { echo -ne "💥 ERROR: $1\n"; exit 1; }
@@ -24,7 +32,31 @@ function LOAD_CONFIG {
 }
 
 function VALIDATE_CONFIG {
+  need_builder=0
   if [[ $lt == "" ]]; then lt="htzdns-`hostname`"; fi
-  if [[ $htz_api_key == "" ]]; then _ERR "You wil need to provide an API key for the htz_api_key variable."; fi
+  if [[ $htz_api_key == "" ]]; then need_builder=1; fi
+#  if [[ $htz_zone_entry_map == "" ]]; then need_builder=1; fi
 }
 
+function MAP_VENDOR {
+  for v in $_VENDOR_DEPENDENCIES; do
+      fullpath="${0%/*}/vendor/$v"
+      if [ -f $fullpath ]; then
+      	 # dig out script name without directories
+         s="${fullpath##*/}"
+	 # dig out script name without extension, so for example $whatismyip executes vendor/whatismyip/whatismyip.sh
+	 eval "${s%\.*}"="${fullpath}"
+      else
+         _ERR "Error, $v could not be mapped from $fullpath."
+      fi
+  done
+}
+
+### Overall test executor
+function RUN_TESTS {
+  if [[ "$runtests" != "1" ]]; then return; fi
+  echo "Running all tests:"
+  echo "  HTZ Api Tests:"
+  htz_run_all_init_tests
+  htz_run_all_api_tests
+}
