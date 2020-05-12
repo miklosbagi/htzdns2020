@@ -4,8 +4,11 @@
 if [ ! -d "${0%/*}/inc" ]; then echo "Missing ./inc/"; exit 1; fi
 for inc in `find ${0%/*}/inc/ -name "*.inc"`; do source "$inc" || { echo "Failed including $inc."; exit 1; }; done
 
+### ADD THIS TO ALL INC FILES
+###    _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+
 # Map binary dependencies
-MAP_BINS "curl jq grep sed cut"	|| _ERR "Failed mapping binaries: $B"
+MAP_BINS "curl jq grep sed cut date find touch mkdir hostname echo wc" || _ERR "Failed mapping binaries: $B"
 
 # Params
 PARAMS_PARSER "$1"		|| _ERR "An error occured while parsing params: $1"
@@ -21,41 +24,65 @@ MAP_VENDOR			|| _ERR "Vendor scripts are missing, did you really git clone --rec
 RUN_TESTS                       && exit 0
 TEST_COVERAGE                   && exit 0
 
-# Check if we need to run:
-# Compare external IP with IP logged and ping (allow 5 mins).
+# if the ip address from whatismyip matches ALL that is in the cache files, exit.
+current_ip=`$whatismyip`	|| _ERR "Failed determining current IP address"
+IS_VALID_IPV4 "$current_ip"	|| _ERR "IP $current_ip is not valid for A records"
 
-# get all zones (get zoneIDs)
-# get all records for zoneid
-# update record info with changed IP
-# update record
+# Load cache, with no error scenario: we will build in case we don't have it.
+LOAD_CACHE
+# Get invalid_cache=0/1 so we can act later on it.
+VALIDATE_CACHE	
+# If this ip is the only one we have in the cache; if so, it's safe to exit (uness we want to build cache)
+IS_IP_IN_CACHE "$current_ip"	&& exit 0
 
-API_GET_ALL_ZONES		|| _ERR "Failed getting zones ($rsp_code: $err_desc)"
+# DO WE HAVE CACHE FOR ALL ITEMS WE HAVE CONFIG FOR?
 
-#  "id": "a9697bbd35139cc5d23647b4c040cce4",
+# Otherwise, let's roll and see how we're doing at Hetzner.
+API_GET_ALL_ZONES || _ERR "Failed getting zones data"
+PARSE_ZONES_JSON "$rsp_body"
 
-#for z in $zones; do
-#    zone_id=`echo $z |cut -d, -f1`
-#    zone_name=`echo $z |cut -d, -f2`
-#    API_GET_ALL_RECORDS "$zone_id"
-#    for r in $records; do
-#        record_id=`echo $r |cut -d, -f1`
-#	rname=`echo $r |cut -d, -f2`
-#	value=`echo $r |cut -d, -f3`
-#	echo "$rname:$value"
-#    done
-#done
+for z in $zones; do
+    # split zone name and id
+    SPLIT_ZONES_ID_NAME "$z"	   || _ERR "Failed splitting $z into name and id"
+    READ_ZONE_CONFIG "$zone_id"	   || zone_config=""
 
+    # if our zone id is not in the zone config, skip this.
+    IS_ZONE_ID_IN_ZONE_CONFIG "$zone_id" || continue
 
-#FETCH_DATA https://dns.hetzner.com/api/v1/zones 
-#".total_entries"
+    # warn about ttl if it's too high: user wants dns to update quickly using this script
+    IS_TTL_LOW_ENOUGH "$zone_ttl"  || _WRN "TTL for $zone_name is too high ($zone_ttl) for DynDNS - please consider 1 hour (3600) or lower value."
 
-#echo $rsp_code
-#echo $rsp_body | jq '.'
+    # get all the records for this zone
+    API_GET_ALL_RECORDS "$zone_id" || _ERR "Failed getting records for zone $zone_name"
+    PARSE_RECORDS_JSON "$rsp_body" || { _WRN "Failed parsing JSON for records for $zone_name, skipping."; continue; }
+    FILTER_RECORDS_JSON "$records" || _WRN "Failed filtering exclusion list from records for $zone_name."
+    oIFS=$IFS
+    IFS=$($echo -en "\n\b")
+    for r in $records; do
+        SPLIT_RECORDS_ID_NAME_VALUE "$r"
+	# If record is not in zone config, skip this one.
+        IS_RECORD_IN_ZONE_CONFIG "$record_id" || continue
+        # if last modification is less than a TTL ago, don't touch anything.
+        IS_MODIFIED_OUTSIDE_TTL "$zone_ttl" "$record_modified" || continue
+	# swtch values to match record type (use for extending beyond A record support)
+	MATCH_VALUE_RECORD_TYPE "$record_type"
+        # add to cache updates in case we need to deal with this
+        ADD_ITEM_TO_CACHE "$zone_id" "$record_id" "$value"
+	# does value match cached value - in which case, we can continue without pushing anything
+	DOES_VALUE_MATCH_HETZNER_VALUE "$record_value" "$value" && continue
+	# add to bulk update list
+	ADD_TO_BULK_UPDATES "$record_id" "$value" "$record_type" "$record_name" "$zone_id"
+    done
+    IFS=$oIFS
+done
 
-# get zones list: jq -r '.zones[] | [.id, .name] | join(",")'
+# if we have no items in the list, then we have nothing to do here.
+IS_EMPTY "$bulk_construct" && { _VRB "Empty update, Hetzner has what we have. Updating caches."; WRITE_NEW_CACHE; exit 0; }
+FINALIZE_JSON_LIST "records" "$bulk_construct"
+BULK_UPDATE_RECORDS "$finalized_json" || { if [[ "$pretend" != "1" ]]; then _ERR "Failed updating records 😩"; fi; }
+WRITE_NEW_CACHE || _WRN "Failed writing new data to $cache_file, we will be hitting the API every time until this is solved."
 
+# NOTIFY WITH DETAILS
 
-# Check user IP
-#wan_ip=`$whatismyip`
-
+# ADD TO UPDATE JSON ONLY IN CASE OUR VALUE DIFFERS (failed to update cache scenario)
 
