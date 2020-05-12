@@ -18,26 +18,31 @@ In any other case, read on.
 - It is written in bash, so it runs on weaker routers, rasp pi, or any modern microwave oven. 
 
 # Usage
+```
+   -r | r | --rebuild	Run configuration builder (interactive)
+   -p | p | --pretend   Do not make any changes, only show what would be done.
+   -v | v | --verbose   See what's happening.
+   -t | t | --test      Run tests (confirms compatibilty, warns on significant API changes)
+   -h | h | --help	This usage manual.
+```
 
 ## Prerequisites
 1) Make sure you see your DNS zones in "Your zones" when you login to https://dns.hetzner.com
 2) In your profile/API Tokens (https://dns.hetzner.com/settings/api-token) generate an access token, and give it a name, for example: htzdns (note: the token, a 32 chars long alphanumeric hash is displayed only once).
 3) You may want to help yourself and lower the TTL on those records you're looking to update, for fast dns resolution change that is.
 
-## Configuration
-
-
-
 ## Before you run
 - Clone with git clone --recurse-submodules.
 - Create a backup of your zone file
 - Add test entry to try your DNS update with, before going wild
 
-## Interactive run
+## Configuration
+The quick way out is to run htzdns.sh -r to build configuration. This will ask for your API key, and fetch data from Hetzner to get your configuration built interactively.
+Read [docs/configuration.md](docs/configuration.md) for the hard way.
 
-## Automated runs
+## Running from cron
 - Setting up in cron: normally the script is silent, unless configured to log / notify. The intention here is to contribute exactly none to your flash disk wear-out (SD Cards, SSDs, Flash memory - you know...)
-- Setup in cron with a specific user (
+- Setup in cron with a specific user (no need for root).
 
 # Releases
 ## 1.0: the rewrite
