@@ -52,7 +52,6 @@ function MAP_BINS {
 
 # map all vendor scripts
 function MAP_VENDOR {
-   _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   for v in $_VENDOR_DEPENDENCIES; do
       fullpath="${0%/*}/vendor/$v"
       if [ -f $fullpath ]; then
@@ -68,7 +67,6 @@ function MAP_VENDOR {
 
 # load configuration file(s)
 function LOAD_CONFIG {
-  _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   d="htzdns.conf htzdns-`$hostname`.conf"
   for cfg in $d; do 
       if [ -f "${0%/*}/$cfg" ]; then 
@@ -83,7 +81,6 @@ function LOAD_CONFIG {
 
 # validate key variables from config, and override with defaults should they not be present.
 function VALIDATE_CONFIG {
-  _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   need_builder=0
   if [ -z "$lt" ]; then lt="htzdns-`$hostname`"; fi
   if [ -z "$htz_api_key" ]; then _WRN "No API key was found, launching builder."; need_builder=1; fi
