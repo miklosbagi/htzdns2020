@@ -9,18 +9,22 @@
 # $5: body
 # $6: optional debug flag (makes requests verbose)
 function REQUEST {
-  rsp_code=""; rsp_body=""
+  rsp_code=""; rsp_body=""; rsp=""
   # GET requests
   if [[ "$1" == "GET" ]]; then 
-     rsp=`$curl -s -A "$_AGENT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2$4"`
-
+     rsp=`$curl -s -A "$_AGENT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2$4"` 
  # POST REQUESTS
   elif [[ "$1" == "POST" ]]; then
-    echo "POST"
-
+    echo "POST Not Implemented"
  # PUT REQUESTS
  elif [[ "$1" == "PUT" ]]; then
-    echo "PUT"
+     if [[ "$pretend" == "1" ]]; then
+        _PRETEND "Would PUT the following JSON data to "$2:"\n\n$4\n"
+	rsp_code="200"
+	rsp_body="pretend"
+     else
+        rsp=`$curl -s -v -A "$_AGENT" -X "PUT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2" --data "$5"`
+     fi
  # Anything else is unsupported.
  else
     _SAY "Request method '$1' is not supported."
@@ -32,8 +36,7 @@ function REQUEST {
   rsp_code=`echo "$rsp"|$grep -E -o "^HTTPCODE:[0-9]+$" |$sed 's#^HTTPCODE:##'` || return 1
 
   # translate response code to something meaningful
-  API_ERROR_TRANSLATOR $rsp_code
-
+  API_ERROR_TRANSLATOR "$rsp_code" "$rsp_body" || _ERR "Response contains error: $err_desc"
  # response code should be 200 for success.
   if [[ "$rsp_code" != "200" ]]; then return 1; fi
 }
@@ -48,7 +51,7 @@ function PARAMS_BUILDER {
      if [[ `echo $param |$sed -E 's#[A-z0-9]+=##'` != "" ]]; then params="$params&$param"; fi
   done
   # remove leading &
-  params=`echo "?$params" |$sed 's#^&##'`
+  if [ ! -z "$params" ]; then params=`echo "?$params" |$sed 's#^&##'`; fi
 }
 
 # HEADER_BUILDER
@@ -59,3 +62,31 @@ function HEADERS_BUILDER {
       arr+=('-H' "$header")
   done
 }
+
+# JSON BUILDER
+# Builds JSON object out of any number of arguments (key=value) provided.
+# NOTE Limitation: this is 1 level in depth only.
+function JSON_BUILDER {
+  # don't call without params.
+  if [ -z "$1" ]; then return 1; fi
+  params=""
+  json_leaf="{"
+  # iterate through params, and add meaningful to the rest of params.
+  arg=0
+  for param in "$@"; do
+      (( arg=arg+1))
+      param_name=`echo "$param" |cut -d= -f1`
+      param_value=`echo "$param" |cut -d= -f2`
+      # add this entry only in case we have value set
+      if [ ! -z "$param_value" ]; then
+         json_leaf="${json_leaf}${nl}   \"$param_name\": \"$param_value\","
+      fi
+  done
+  # should we end up with no json object, return false.
+  if [ -z "$json_leaf" ]; then return 1; fi
+  # remove last comma
+  json_leaf=`echo "$json_leaf" | $sed '$ s/.$//'`
+  # close it up
+  json_leaf="${json_leaf}${nl}},"
+}
+
