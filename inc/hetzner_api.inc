@@ -27,10 +27,24 @@ function API_GET_ALL_RECORDS {
   REQUEST "GET" "$endpoint" "$headers" "$params" || return 1
 }
 
+### Bulk Update Records (PUT request)
+### Updates several records at once (yeah, failing at its best).
+### Function takes one json object, no API params possible besides JSON object.
+###    $1 records:	json object, list of 
+function BULK_UPDATE_RECORDS {
+   endpoint="https://dns.hetzner.com/api/v1/records/bulk"
+   local headers
+   HEADERS_BUILDER "Auth-API-Token: $htz_api_key" "Content-Type: application/json"
+   REQUEST "PUT" "$endpoint" "$headers" "" "$1" || return 1
+}
+
 ### Catch Error and explain
 ### expects error code, returns description.
 function API_ERROR_TRANSLATOR {
   err_desc=""
+  # check of errors in response body first
+  e=`$echo "$2" |$grep -q -i "error.*json not valid"` && { err_desc="API says we sent invalid JSON"; _VRB "<< $err_desc"; return 1; }
+  # check for errors in response codes
   case $1 in
   200 ) err_desc="Successful"; return ;;
   401 ) err_desc="Unauthorized" ;;
@@ -41,5 +55,5 @@ function API_ERROR_TRANSLATOR {
   422 ) err_desc="Unprocessable entry" ;;
   esac
   shift
-  return 1;
+  _VRB "<< Error found: $error_desc"; return 1;
 }
