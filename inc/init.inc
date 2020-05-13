@@ -21,8 +21,8 @@ binloc="/bin /usr/bin /usr/local/bin /sbin /usr/sbin /opt/bin /jffs/bin /jffs/sb
 # simple out msg.
 function _SAY { $echo -ne "$1\n"; }
 # verbose messaging (needs -v turned on)
-function _VRB1 { if [[ $verbose == "1" ]] && [[ vrb="1" ]]; then _SAY "📢 $1"; fi; }
-function _VRB2 { if [[ $verbose == "1" ]] && [[ vrb="1" ]]; then _SAY "📢📢 $1"; fi; }
+function _VRB1 { if [[ $verbose == "1" ]] && [[ $vrb == "1" ]]; then _SAY "📢 $1"; fi; }
+function _VRB2 { if [[ $verbose == "1" ]] && [[ $vrb == "2" ]]; then _SAY "📢📢 $1"; fi; }
 # communicate errors on all channels, then exit
 function _ERR { _SAY "💥 ERROR: $1"; exit 1; }
 # comminicate warnings, don't exit
@@ -32,7 +32,7 @@ function _PRETEND { _SAY "👻 PRETEND: $1"; }
 
 # Find binary files in various locations (usually in PATH)
 function FIND_BIN {
-   _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: ()"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME} :: in: ()"
   for loc in $binloc; do
       if [ -d "$loc" ] && [ -f "$loc/$1" ]; then 
          eval "$1"="$loc/$1"; 
@@ -45,7 +45,7 @@ function FIND_BIN {
 
 # map all binary dependencies
 function MAP_BINS {
-   _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: ()"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME} :: in: ()"
    for bin in ${1}; do 
        FIND_BIN "$bin" || _ERR "Cannot find $bin in PATH or at common locations."
    done
