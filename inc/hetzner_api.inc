@@ -12,6 +12,7 @@ function API_GET_ALL_ZONES {
    local headers
    HEADERS_BUILDER "Auth-API-Token: $htz_api_key"
    PARAMS_BUILDER "name=$1" "page=$2" "per_page=$3" "search_name=$4"
+   _VRB2 "REQUEST PARAMS" "GET" "$endpoint" "$headers" "$params"
    REQUEST "GET" "$endpoint" "$headers" "$params" || return 1
 }
 
@@ -26,6 +27,7 @@ function API_GET_ALL_RECORDS {
    local headers
    HEADERS_BUILDER "Auth-API-Token: $htz_api_key"
    PARAMS_BUILDER "zone_id=$1" "page=$2" "per_page=$3"
+   _VRB2 "REQUEST PARAMS" "GET" "$endpoint" "$headers" "$params"
    REQUEST "GET" "$endpoint" "$headers" "$params" || return 1
 }
 
@@ -38,6 +40,7 @@ function BULK_UPDATE_RECORDS {
    endpoint="https://dns.hetzner.com/api/v1/records/bulk"
    local headers
    HEADERS_BUILDER "Auth-API-Token: $htz_api_key" "Content-Type: application/json"
+   _VRB2 "REQUEST PARAMS" "PUT" "$endpoint" "$headers" "$1"
    REQUEST "PUT" "$endpoint" "$headers" "" "$1" || return 1
 }
 
