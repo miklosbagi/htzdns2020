@@ -6,20 +6,20 @@ function PARAMS_PARSER {
    for p in $@; do
        # capture --param and skim down to p
        if [[ `$echo $p |$grep -E "^\-\-[a-z]+"` != "" ]]; then 
-          n=`$echo "$p" |$sed 's#--##;s#^\(.\).*#\1#'`; params="$params $n"
+          n=`$echo "$p" |$sed 's#--##;s#^\(.\).*#\1#'`; ps="$ps $n"
        fi
        # capture -prm and split up to p r m
        if [[ `$echo $p |$grep -E "^-[a-z]+"` != "" ]]; then
-           n=`$echo "$p" |$sed 's#-##;s#[a-z]#& #g;s# $##'`; params="$params $n"
+           n=`$echo "$p" |$sed 's#-##;s#[a-z]#& #g;s# $##'`; ps="$ps $n"
        fi
        # capture prm and split up to p r m
        if [[ `$echo $p |$grep -E "^[a-z]+"` != "" ]]; then 
-          n=`$echo "$p" | sed 's#[a-z]#& #g;s# $##'`; params="$params $n"
+          n=`$echo "$p" | sed 's#[a-z]#& #g;s# $##'`; ps="$ps $n"
        fi
    done
 
    vrb=0
-   for p in $params; do
+   for p in $ps; do
        case $p in
        -f | f | --force )			force="1"; 	sw="$sw force";;
        -r | r | --rebuild )			rebuild="1"; 	sw="$sw rebuild";;
