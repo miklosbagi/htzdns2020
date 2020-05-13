@@ -32,7 +32,6 @@ for p in $params; do
   esac
   shift
 done
-exit 0
 }
 
 ### Usage manual next to params, so we can keep it updated.
