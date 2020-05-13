@@ -7,8 +7,8 @@ for inc in `find ${0%/*}/inc/ -name "*.inc"`; do source "$inc" || { echo "Failed
 # Map binary dependencies
 MAP_BINS "curl jq grep sed cut date find touch mkdir hostname echo wc" || _ERR "Failed mapping binaries: $B"
 
-# Params
-PARAMS_PARSER "$@"		
+# Params handling, and reset params
+PARAMS_PARSER "$@"; set --
 
 # Pull & validate configuration
 LOAD_CONFIG 			|| _ERR "Failed loading configuration"
