@@ -5,7 +5,7 @@
 ### picks up id and name, orders them into comma separated: zone_id,zone_name
 function PARSE_ZONES_JSON {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
-   zones=`echo "$1" | $jq -r '.zones[] | [.id, .name, .ttl] | join(",")'` || return 1
+   zones=`echo "$1" | $jq -r '.zones[] | [.id, .name, (.ttl|tostring)] | join(",")'` || return 1
    if [ -z "$zones" ]; then return 1; fi
 }
 
