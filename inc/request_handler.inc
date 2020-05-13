@@ -47,7 +47,8 @@ function PARAMS_BUILDER {
    params=""
    # iterate through params, and add meaningful to the rest of params.
    for param in "$@"; do
-       if [[ `echo $param |$sed -E 's#[A-z0-9]+=##'` != "" ]]; then params="$params&$param"; fi
+       _VRB2 "Param: $param"
+       if [[ `echo $param |$cut -d= -f2` != "" ]]; then params="$params&$param"; fi
    done
    # remove leading &
    if [ ! -z "$params" ]; then params=`echo "?$params" |$sed 's#^&##'`; fi
