@@ -23,11 +23,11 @@ function _SAY { $echo -ne "$1\n"; }
 # verbose messaging (needs -v turned on)
 function _VRB { if [[ "$verbose" == "1" ]]; then _SAY "📢 $1"; fi; }
 # communicate errors on all channels, then exit
-function _ERR { _SAY "💥 ERROR: $1\n"; exit 1; }
+function _ERR { _SAY "💥 ERROR: $1"; exit 1; }
 # comminicate warnings, don't exit
-function _WRN { _SAY "⚠️  WARNING: $1\n"; }
+function _WRN { _SAY "⚠️  WARNING: $1"; }
 # pretend messages
-function _PRETEND { _SAY "👻 PRETEND: $1\n"; }
+function _PRETEND { _SAY "👻 PRETEND: $1"; }
 
 # Find binary files in various locations (usually in PATH)
 function FIND_BIN {
@@ -73,7 +73,7 @@ function LOAD_CONFIG {
          source ${0%/*}/$cfg || _ERR "Failed loading config: $cfg"
 	 cfok=y; 
       else
-         _WRN "Could not find config: $cfg"
+         _WRN "Could not find config: $cfg";
       fi
   done
   if [[ "$cfgok" != "" ]]; then _ERR "Failed loading configs ($d)."; fi
@@ -81,12 +81,13 @@ function LOAD_CONFIG {
 
 # validate key variables from config, and override with defaults should they not be present.
 function VALIDATE_CONFIG {
+  if [[ "$need_builder" == "1" ]]; then return; fi
   need_builder=0
   if [ -z "$lt" ]; then lt="htzdns-`$hostname`"; fi
-  if [ -z "$htz_api_key" ]; then _WRN "No API key was found, launching builder."; need_builder=1; fi
-  if [ -z "$htz_cache_dir" ]; then _WRN "No htz_cache_dir value was found in htzdns.conf, defaulting to ${0%/*}/data"; htz_cache_dir="data"; fi
+  if [ -z "$htz_api_key" ]; then _WRN "No API key was found, launching builder."; need_builder=1; return; fi
+  if [ -z "$htz_cache_dir" ]; then _WRN "No htz_cache_dir value was found in htzdns.conf, defaulting to ${0%/*}/data"; htz_cache_dir="data"; return; fi
   # TODO: the record map in config could use better validation.
-  if [ -z "$htz_update_zone_record_map" ]; then _WRN "No zone mapping config was found, launching builder"; need_builder=1; fi
+  if [ -z "$htz_update_zone_record_map" ]; then _WRN "No zone mapping config was found, launching builder"; need_builder=1; return; fi
 }
 
 
