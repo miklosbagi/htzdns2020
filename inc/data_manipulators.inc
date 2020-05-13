@@ -4,6 +4,7 @@
 ### Takes a JSON Response body, expecting zones data from Hetzner,
 ### picks up id and name, orders them into comma separated: zone_id,zone_name
 function PARSE_ZONES_JSON {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    zones=`echo "$1" | $jq -r '.zones[] | [.id, .name, .ttl] | join(",")'` || return 1
    if [ -z "$zones" ]; then return 1; fi
 }
@@ -11,6 +12,7 @@ function PARSE_ZONES_JSON {
 ### SPLIT_ZONES_ID_NAME
 ### Takes an id,name input and returns zone_id and zone_name separately
 function SPLIT_ZONES_ID_NAME {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    zone_id=`echo "$1" |$cut -d, -f1`
    zone_name=`echo "$1" |$cut -d, -f2`
    zone_ttl=`echo "$1" |$cut -d, -f3`
@@ -22,6 +24,7 @@ function SPLIT_ZONES_ID_NAME {
 ### Takes a JSON Response body, expecting records data from Hetzner,
 ### filters to A records, and picks up id, name and value only, returns them comma separated
 function PARSE_RECORDS_JSON {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    # NOTE: Only A records are supported, filtering & joining with that in mind:
    records=`echo "$1" | $jq -r '.records[] | select(.type == "A") | [.zone_id, .id, .name, .value, .type, .modified] | join(",")'` || return 1
    if [ -z "$records" ]; then return 1; fi
@@ -30,6 +33,7 @@ function PARSE_RECORDS_JSON {
 ### SPLIT_RECORDS_ID_NAME_VALUE
 ### Takes an id,name,value data and splits up to individual bits
 function SPLIT_RECORDS_ID_NAME_VALUE {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    record_zone_id=`echo "$1" | $cut -d, -f1`
    record_id=`echo "$1" | $cut -d, -f2`
    record_name=`echo "$1" | $cut -d, -f3`
@@ -44,6 +48,7 @@ function SPLIT_RECORDS_ID_NAME_VALUE {
 ### Takes records and removes all names that matches the list in $htz_host_exclude
 ### returns $record.
 function FILTER_RECORDS_JSON {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   excludes=`echo "$htz_host_exclude" | $sed 's#,##'`
   for exclude in $excludes; do
       records=`echo "$records" | $grep -v ",${exclude},"`
@@ -55,6 +60,7 @@ function FILTER_RECORDS_JSON {
 ### reads host specific config file and reads configuration present.
 ### Takes one optional param: $1 zone_id
 function READ_ZONE_CONFIG {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    # read up
    if [ ! -f "${0%/*}/htzdns-$(hostname).conf" ]; then return 1; fi
    c=`$sed -n "/^htz_update_zone_record_map=\"/,/^\"$/p" "${0%/*}/htzdns-$(hostname).conf"` || return 1
@@ -79,6 +85,7 @@ function READ_ZONE_CONFIG {
 #    },
 # Takes a minimum of 5 max 6 params
 function ADD_TO_BULK_UPDATES {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   JSON_BUILDER "id=$1" "value=$2" "type=$3" "name=$4" "zone_id=$5" "ttl=$6"
   bulk_construct="$bulk_construct${nl}${json_leaf}"
 }
@@ -88,6 +95,7 @@ function ADD_TO_BULK_UPDATES {
 #   $1 top node name
 #   $2 json object
 function FINALIZE_JSON_LIST {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   # no empties, return false.
   if [ -z "$1" ] || [ -z "$2" ]; then return 1; fi
   json_data=`echo "$2" | $sed '$ s/.$//'`
@@ -99,6 +107,7 @@ function FINALIZE_JSON_LIST {
 ### Updates value to match record type expectations
 ### Takes one param $1 record_type
 function MATCH_VALUE_RECORD_TYPE {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
     value=""
     if [[ "$1" == "A" ]]; then
        value="$current_ip"

@@ -4,14 +4,11 @@
 if [ ! -d "${0%/*}/inc" ]; then echo "Missing ./inc/"; exit 1; fi
 for inc in `find ${0%/*}/inc/ -name "*.inc"`; do source "$inc" || { echo "Failed including $inc."; exit 1; }; done
 
-### ADD THIS TO ALL INC FILES
-###    _VRB ">> $BASH_SOURCE :: ${FUNCNAME} :: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
-
 # Map binary dependencies
 MAP_BINS "curl jq grep sed cut date find touch mkdir hostname echo wc" || _ERR "Failed mapping binaries: $B"
 
 # Params
-PARAMS_PARSER "$1"		|| _ERR "An error occured while parsing params: $1"
+PARAMS_PARSER "$@"		
 
 # Pull & validate configuration
 LOAD_CONFIG 			|| _ERR "Failed loading configuration"
@@ -33,7 +30,7 @@ LOAD_CACHE
 # Get invalid_cache=0/1 so we can act later on it.
 VALIDATE_CACHE	
 # If this ip is the only one we have in the cache; if so, it's safe to exit (uness we want to build cache)
-IS_IP_IN_CACHE "$current_ip"	&& exit 0
+IS_IP_IN_CACHE "$current_ip"	&& { if [[ "$force" != "1" ]]; then exit 0; fi; }
 
 # DO WE HAVE CACHE FOR ALL ITEMS WE HAVE CONFIG FOR?
 

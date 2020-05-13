@@ -4,6 +4,7 @@
 ### LOAD_CACHE
 ### Sucks up cache data
 function LOAD_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   cache_file="${0%/*}/$htz_cache_dir/cache.data"
   VALIDATE_CACHE_FILESYSTEM
   # load lines that are formatted correctly only.
@@ -14,6 +15,7 @@ function LOAD_CACHE {
 
 ### Filesystem validation for cache dir and file
 function VALIDATE_CACHE_FILESYSTEM {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   # if we don't have a cache dir, attempt to create it
   if [ ! -d "${0%/*}/$htz_cache_dir" ]; then
      a=`$mkdir -p "${0%/*}/$htz_cache_dir"` || _ERR "Failed creating cache directory (${0%/*}/$htz_cache_dir). Please ensure write permissions      for   `whoami` user."
@@ -26,6 +28,7 @@ function VALIDATE_CACHE_FILESYSTEM {
 ### IS_VALID_CACHE
 ### Run a few tests on our cache data to figure if we can identify a rebuild requirement early on.
 function VALIDATE_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   invalid_cache="1"
   # invalid if empty
   if [ -z "$htz_cache" ]; then return 1; fi
@@ -40,6 +43,7 @@ function VALIDATE_CACHE {
 ### Attempts to read current cache and identify if we have all the entries having the curent IP.
 ### Takes one param: ip
 function IS_IP_IN_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   res=`$echo "$htz_cache" |grep -v ",$1$"`
   if [ -z "$res" ]; then return 0; else return 1; fi
 }
@@ -48,6 +52,7 @@ function IS_IP_IN_CACHE {
 ### Will add (or replace existing) item to cache with new value(s).
 ### Takes $1 zone_id, $2 record_id, $3 value as params.
 function ADD_ITEM_TO_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   # no empty params
   if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then return 1; fi
   # check if our new cache has items, or this is a fresh build.
@@ -65,11 +70,12 @@ function ADD_ITEM_TO_CACHE {
 }
 
 function WRITE_NEW_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
   if [[ "$pretend" != "1" ]]; then
      # cleanup empty lines
      htz_cache_new=`$echo "$htz_cache_new" | $sed -r '/^\s*$/d'`
      # write
-     $echo "$htz_cache_new" > "$cache_file" && _VRB "<< Cache updated successfully" || _WRN "Error updating cache file $cache_file with data: $htz_cache_new"
+     $echo "$htz_cache_new" > "$cache_file" && _VRB1 "<< Cache updated successfully" || _WRN "Error updating cache file $cache_file with data: $htz_cache_new"
   else
      _PRETEND "Would write the following data to cache file ${cache_file}:\n${htz_cache_new}"
   fi

@@ -1,6 +1,7 @@
 ### Configuration Builder
 
 function BUILDER {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    if [[ -z $rebuild && $need_builder == "0" ]]; then return; fi
    if [[ $rebuild != "1" ]]; then
       _SAY "A few items are missing from the configuration ($lt), we need to build them in order to continue."
@@ -15,6 +16,7 @@ function BUILDER {
 }
 
 function BUILDER_APIKEY {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    $echo "🔑 API key set: $htz_api_key"
    if [[ "$htz_api_key" == "" ]]; then
       $echo -ne "   Please go to https://dns.hetzner.com/settings/api-token, generate an API token, and provide it here:"
@@ -36,46 +38,48 @@ function BUILDER_APIKEY {
 }
 
 function BUILDER_ZONES {
-  $echo "🔗 Checking mapping configuration..."
-  API_GET_ALL_ZONES || _ERR "Failed getting zones data"
-  PARSE_ZONES_JSON "$rsp_body"
-  for z in $zones; do
-      # split zone name and id
-      SPLIT_ZONES_ID_NAME "$z" || _ERR "Failed splitting $z into name and id"
-      READ_ZONE_CONFIG "$zone_id" || zone_config=""
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   $echo "🔗 Checking mapping configuration..."
+   API_GET_ALL_ZONES || _ERR "Failed getting zones data"
+   PARSE_ZONES_JSON "$rsp_body"
+   for z in $zones; do
+       # split zone name and id
+       SPLIT_ZONES_ID_NAME "$z" || _ERR "Failed splitting $z into name and id"
+       READ_ZONE_CONFIG "$zone_id" || zone_config=""
 
-      # get all the records for this zone
-      API_GET_ALL_RECORDS "$zone_id" || _ERR "Failed getting records for zone $zone_name"
-      PARSE_RECORDS_JSON "$rsp_body" || { _WRN "Failed parsing JSON for records for $zone_name, skipping."; continue; }
-      FILTER_RECORDS_JSON "$records" || _WRN "Failed filtering exclusion list from records for $zone_name."
-      $echo
-      $echo "   ⚙️  $zone_name has the following configuration options:"
+       # get all the records for this zone
+       API_GET_ALL_RECORDS "$zone_id" || _ERR "Failed getting records for zone $zone_name"
+       PARSE_RECORDS_JSON "$rsp_body" || { _WRN "Failed parsing JSON for records for $zone_name, skipping."; continue; }
+       FILTER_RECORDS_JSON "$records" || _WRN "Failed filtering exclusion list from records for $zone_name."
+       $echo
+       $echo "   ⚙️  $zone_name has the following configuration options:"
 
-      # keep editing until config is considered complete
-      while true; do
-        n=0
-	oIFS=$IFS
-    	IFS=$($echo -en "\n\b")
-        for r in $records; do
-           (( n=n+1))
-	   SPLIT_RECORDS_ID_NAME_VALUE "$r"
-	   BUILDER_IS_RECORD_CONFIGURED "$record_id" && mark="✅" || mark=""
-	   $echo "    [$n] $record_name $mark"
-        done
-	IFS=$oIFS
-        $echo
-        $echo "   Records marked with ✅ are currently configured."
-        $echo -ne "   Swith these on/off individually by typing the line number, or hit enter to continue [1-$n]:"
-        read -p " " r </dev/tty ; [ "$r" = "" ] && break;
-        BUILDER_SWITCH_RECORD_IN_CONFIG "$r"
-	$echo "Configuration updated, here's your new list:"
-      done
-      ADD_TO_ALL_ZONES_CONFIG "$zone_config"
+       # keep editing until config is considered complete
+       while true; do
+         n=0
+  	 oIFS=$IFS
+      	 IFS=$($echo -en "\n\b")
+         for r in $records; do
+             (( n=n+1))
+	     SPLIT_RECORDS_ID_NAME_VALUE "$r"
+	     BUILDER_IS_RECORD_CONFIGURED "$record_id" && mark="✅" || mark=""
+	     $echo "    [$n] $record_name $mark"
+         done
+	 IFS=$oIFS
+         $echo
+         $echo "   Records marked with ✅ are currently configured."
+         $echo -ne "   Swith these on/off individually by typing the line number, or hit enter to continue [1-$n]:"
+         read -p " " r </dev/tty ; [ "$r" = "" ] && break;
+         BUILDER_SWITCH_RECORD_IN_CONFIG "$r"
+	 $echo "Configuration updated, here's your new list:"
+       done
+       ADD_TO_ALL_ZONES_CONFIG "$zone_config"
   done
   if [ -z "$all_zones_config" ]; then _ERR "You have not configured any records to be updated. Exiting."; fi
 }
 
 function BUILD_CONFIG {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    $echo
    $echo "⌛ Building config..."
    config_template="### Automatically generated htzdns-`hostname`.conf (`date +%Y-%m-%d' '%H:%M:%S`):
@@ -105,6 +109,7 @@ function BUILD_CONFIG {
 }
 
 function BUILDER_CONFIG_DIFF {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    config_present="${0%/*}/htzdns-`hostname`.conf"
    # if we have a present config file, load it up - otherwise report difference (as missing).
    if [ -f "$config_present" ]; then config_current=`$grep -v "^#" $config_present`; else return 1; fi
@@ -118,6 +123,7 @@ function BUILDER_CONFIG_DIFF {
 ### takes a single record id as input, expects $zone_config to be available
 ### zone_config can be empty when this is called.
 function BUILDER_IS_RECORD_CONFIGURED {
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
    # check if record matches
    if [[ `echo "$zone_config" | $grep "$1" | $cut -d, -f4` == "$1" ]]; then return; else return 1; fi
 }
@@ -126,38 +132,40 @@ function BUILDER_IS_RECORD_CONFIGURED {
 ### switches an individual record on/off in config
 ### takes line number, uses $records and $zone_config
 function BUILDER_SWITCH_RECORD_IN_CONFIG {
-    if [ -z $1 ]; then return 1; fi
-    # grab the line number from the records list.
-    m=`echo "$records" | $sed "${r}q;d"`
-    # we only need the record_id for match
-    m_id=`echo "$m" | $cut -d, -f2`
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   if [ -z $1 ]; then return 1; fi
+   # grab the line number from the records list.
+   m=`echo "$records" | $sed "${r}q;d"`
+   # we only need the record_id for match
+   m_id=`echo "$m" | $cut -d, -f2`
 
-    # if we have this match in our config, remove it.
-    if [[ `echo "$zone_config" |$grep "$m_id$"` != "" ]]; then
-       zone_config=`echo "$zone_config" |$grep -v ",$m_id$"`
-       # note that zone config can be allowed to be empty at this point.
-    # otherwise, add it.
-    else
-       # if zone config is empty, no newline is needed, otherwise, yeah.
-       if [ -z "$zone_config" ]; then is_nl=""; else is_nl="$nl"; fi
-       m_name=`echo "$m" |$cut -d, -f3`
-       # we cannot have an emtpy record name.
-       if [ -z "$m_name" ]; then return 1; fi
-       # construct
-       zone_config="${zone_config}${is_nl}${zone_name},${zone_id},${m_name},${m_id}"
-    fi
+   # if we have this match in our config, remove it.
+   if [[ `echo "$zone_config" |$grep "$m_id$"` != "" ]]; then
+      zone_config=`echo "$zone_config" |$grep -v ",$m_id$"`
+      # note that zone config can be allowed to be empty at this point.
+      # otherwise, add it.
+   else
+      # if zone config is empty, no newline is needed, otherwise, yeah.
+      if [ -z "$zone_config" ]; then is_nl=""; else is_nl="$nl"; fi
+      m_name=`echo "$m" |$cut -d, -f3`
+      # we cannot have an emtpy record name.
+      if [ -z "$m_name" ]; then return 1; fi
+      # construct
+      zone_config="${zone_config}${is_nl}${zone_name},${zone_id},${m_name},${m_id}"
+   fi
 }
 
 ### ADD_TO_ALL_ZONES_CONFIG
 ### Creates a consolidated zones config, using all individual zone_configs.
 ### Takes one param: $1 zone_config
 function ADD_TO_ALL_ZONES_CONFIG {
-    if [ -z "$1" ]; then _VRB "<< zone_config variable empty"; return 1; fi
-    # if we don't have all_zones_config, create it with this entry.
-    if [ -z "$all_zones_config" ]; then
-       all_zones_config="$zone_config"
-    else
-    # otherwise, add to existing.
-       all_zones_config="${all_zones_config}${nl}${zone_config}"
-    fi
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   if [ -z "$1" ]; then _VRB1 "<< zone_config variable empty"; return 1; fi
+   # if we don't have all_zones_config, create it with this entry.
+   if [ -z "$all_zones_config" ]; then
+      all_zones_config="$zone_config"
+   else
+   # otherwise, add to existing.
+      all_zones_config="${all_zones_config}${nl}${zone_config}"
+   fi
 }
