@@ -44,6 +44,7 @@ function VALIDATE_CACHE {
 ### Takes one param: ip
 function IS_IP_IN_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+  if [ -z "$htz_cache" ]; then return 1; fi
   res=`$echo "$htz_cache" |grep -v ",$1$"`
   if [ -z "$res" ]; then return 0; else return 1; fi
 }
@@ -71,13 +72,13 @@ function ADD_ITEM_TO_CACHE {
 
 function WRITE_NEW_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+  # cleanup empty lines
+  htz_cache_new=`$echo "$htz_cache_new" | $sed -r '/^\s*$/d'`
   if [[ "$pretend" != "1" ]]; then
-     # cleanup empty lines
-     htz_cache_new=`$echo "$htz_cache_new" | $sed -r '/^\s*$/d'`
      # write
      $echo "$htz_cache_new" > "$cache_file" && _VRB1 "<< Cache updated successfully" || _WRN "Error updating cache file $cache_file with data: $htz_cache_new"
   else
-     _PRETEND "Would write the following data to cache file ${cache_file}:\n${htz_cache_new}"
+     _PRETEND "Would write the following data to cache file ${cache_file}:\n${htz_cache_new}\n"
   fi
 }
 
