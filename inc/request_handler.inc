@@ -17,26 +17,27 @@ function REQUEST {
    # PUT REQUESTS
    elif [[ "$1" == "PUT" ]]; then
         if [[ "$pretend" == "1" ]]; then
-           _PRETEND "Would PUT the following JSON data to "$2:"\n\n$4\n"
+           _PRETEND "Would PUT the following JSON data to "$2:"\n$5\n"
 	   rsp_code="200"
 	   rsp_body="pretend"
+ 	   return 0
         else
            rsp=`$curl -s -A "$_AGENT" -X "PUT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2" --data "$5"`
         fi
-    # Anything else is unsupported.
-    else
-       _SAY "Request method '$1' is not supported."
-       return 1
-     fi
+   # Anything else is unsupported.
+   else
+      _SAY "Request method '$1' is not supported."
+      return 1
+   fi
 
-     # separate response from reponse code
-     rsp_body=`echo "$rsp"|$sed -E 's#^HTTPCODE:[0-9]+$##' |$sed '/^$/d'` || return 1
-     rsp_code=`echo "$rsp"|$grep -E -o "^HTTPCODE:[0-9]+$" |$sed 's#^HTTPCODE:##'` || return 1
+   # separate response from reponse code
+   rsp_body=`echo "$rsp"|$sed -E 's#^HTTPCODE:[0-9]+$##' |$sed '/^$/d'` || return 1
+   rsp_code=`echo "$rsp"|$grep -E -o "^HTTPCODE:[0-9]+$" |$sed 's#^HTTPCODE:##'` || return 1
 
-     # translate response code to something meaningful
-     API_ERROR_TRANSLATOR "$rsp_code" "$rsp_body" || _ERR "Response contains error: $err_desc"
-     # response code should be 200 for success.
-     if [[ "$rsp_code" != "200" ]]; then return 1; fi
+   # translate response code to something meaningful
+   API_ERROR_TRANSLATOR "$rsp_code" "$rsp_body" || _ERR "Response contains error: $err_desc"
+   # response code should be 200 for success.
+   if [[ "$rsp_code" != "200" ]]; then return 1; fi
 }
 
 # PARAMS_BUILDER
