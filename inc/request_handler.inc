@@ -23,7 +23,7 @@ function REQUEST {
 	rsp_code="200"
 	rsp_body="pretend"
      else
-        rsp=`$curl -s -v -A "$_AGENT" -X "PUT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2" --data "$5"`
+        rsp=`$curl -s -A "$_AGENT" -X "PUT" -w "\\nHTTPCODE:%{http_code}\\n" "${headers[@]}" "$2" --data "$5"`
      fi
  # Anything else is unsupported.
  else
