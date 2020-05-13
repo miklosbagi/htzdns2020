@@ -33,8 +33,7 @@ function BUILDER_APIKEY {
      read -p " " r </dev/tty ; [ "$r" = "" ] || htz_api_key=$r;
    done
    $echo "   $r"
-   $echo
-   #✅ Excellent, Hetzner API welcomes $htz_api_key (response: $rsp_code: $err_desc)"
+   $echo "✅ Excellent, Hetzner API welcomes $htz_api_key (response: $rsp_code: $err_desc)"
 }
 
 function BUILDER_ZONES {
