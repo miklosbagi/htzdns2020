@@ -98,7 +98,7 @@ function TC_API_APIKEY {
    endpoint="https://dns.hetzner.com/api/v1/zones"
    local headers
    HEADERS_BUILDER "Auth-API-Token: $htz_api_key"
-   VRB2 "GET" "$endpoint" "$headers" "$params"
+   _VRB2 "GET" "$endpoint" "$headers" "$params"
    REQUEST "GET" "$endpoint" "$headers" "$params" || return 1
    r="✅ Excellent, Hetzner API welcomes $htz_api_key (response: $rsp_code: $err_desc)"
 }
