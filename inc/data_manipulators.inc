@@ -56,6 +56,7 @@ function FILTER_RECORDS_JSON {
 ### Takes one optional param: $1 zone_id
 function READ_ZONE_CONFIG {
    # read up
+   if [ ! -f "${0%/*}/htzdns-$(hostname).conf" ]; then return 1; fi
    c=`$sed -n "/^htz_update_zone_record_map=\"/,/^\"$/p" "${0%/*}/htzdns-$(hostname).conf"` || return 1
    # clean junk
    zone_config=`echo "$c" |sed 's#^htz_update_zone_record_map=\"##' |$sed 's#"##' |$grep -v ^$` || return 1
