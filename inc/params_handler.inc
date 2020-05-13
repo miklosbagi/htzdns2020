@@ -21,17 +21,18 @@ done
 vrb=0
 for p in $params; do
   case $p in
-    -f | f | --force )				 force="1"; sw="$sw force";;
-    -r | r | --rebuild )			 rebuild="1"; sw="$sw rebuild";;
-    -t | t | --test )				 runtests="1" sw="$sw test";;
-    -tc | tc | --tests-coverage )                coverage="1" sw="$sw coverage";;
-    -p | p | --pretend )			 pretend="1" sw="$sw pretend";;
-    -v | v | --verbose )			 verbose="1" sw="$sw verbose"; (( vrb = vrb + 1 )) ;;
-    -h | h | help | -help | /help| --help )      USAGE; exit;;
-    * )                                          _WRN "Unknown argument provided (${@#})"; USAGE; exit 1 ;;
+    -f | f | --force )				 force="1"; 	sw="$sw force";;
+    -r | r | --rebuild )			 rebuild="1"; 	sw="$sw rebuild";;
+    -t | t | --test )				 runtests="1"; 	sw="$sw test";;
+    -c | c | --tests-coverage )                  coverage="1";	sw="$sw coverage";;
+    -p | p | --pretend )			 pretend="1"; 	sw="$sw pretend";;
+    -v | v | --verbose )			 verbose="1"; 	sw="$sw verbose"; (( vrb = vrb + 1 ));;
+    -h | h | help | -help | /help| --help )      USAGE; 	exit;;
+    * )                                          _WRN "Unknown argument provided (${@#})"; USAGE; exit 1;;
   esac
   shift
 done
+_VRB "Params: $sw"
 }
 
 ### Usage manual next to params, so we can keep it updated.
