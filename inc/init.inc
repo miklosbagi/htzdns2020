@@ -72,8 +72,6 @@ function LOAD_CONFIG {
       if [ -f "${0%/*}/$cfg" ]; then 
          source ${0%/*}/$cfg || _ERR "Failed loading config: $cfg"
 	 cfok=y; 
-      else
-         _WRN "Could not find config: $cfg";
       fi
   done
   if [[ "$cfgok" != "" ]]; then _ERR "Failed loading configs ($d)."; fi
