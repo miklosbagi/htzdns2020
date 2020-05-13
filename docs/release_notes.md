@@ -29,8 +29,12 @@ Scale:
 Tests:
 - Light testing skeleton
 - Test coverage report
+
+
 ---
+
 Remaining:
 - Test with MacOS, Gentoo Linux and Raspberry Pi.
 - Add notification support
-- 
+
+
