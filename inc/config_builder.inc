@@ -83,7 +83,7 @@ function BUILD_CONFIG {
    	       	    htz_api_key=\"$htz_api_key\"
                     htz_update_zone_record_map=\"${nl}${all_zones_config}${nl}\"
    "
-   config_out=`$echo "$config_template" |sed -e 's#^[\t ]\+##'`
+   config_out=`$echo "$config_template" |$sed -e 's#^[\t ]\+##'`
 
    BUILDER_CONFIG_DIFF "$config_out" && { $echo -ne "ℹ️  There is no change in config, not writing anything 😊\n\n"; return; }
 
@@ -99,8 +99,9 @@ function BUILD_CONFIG {
    $echo "$config_out" > ${0%/*}/htzdns-`hostname`.conf || return 1
    $echo
    $echo "✅ Excellent, we are done here."
-   $echo "   Run ${0} with the -p or -v flags, and see how your records are updated 😊"
+   $echo "   Running ${0} with pretend to see what would be done. 😊"
    $echo
+   pretend="1"
 }
 
 function BUILDER_CONFIG_DIFF {
