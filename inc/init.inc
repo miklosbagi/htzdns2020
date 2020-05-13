@@ -21,7 +21,8 @@ binloc="/bin /usr/bin /usr/local/bin /sbin /usr/sbin /opt/bin /jffs/bin /jffs/sb
 # simple out msg.
 function _SAY { $echo -ne "$1\n"; }
 # verbose messaging (needs -v turned on)
-function _VRB { if [[ "$verbose" == "1" ]]; then _SAY "📢 $1"; fi; }
+function _VRB1 { if [[ $verbose == "1" ]] && [[ vrb="1" ]]; then _SAY "📢 $1"; fi; }
+function _VRB2 { if [[ $verbose == "1" ]] && [[ vrb="1" ]]; then _SAY "📢📢 $1"; fi; }
 # communicate errors on all channels, then exit
 function _ERR { _SAY "💥 ERROR: $1"; exit 1; }
 # comminicate warnings, don't exit
