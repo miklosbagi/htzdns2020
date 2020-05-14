@@ -1,6 +1,21 @@
 # Release notes
 ## 1.0 (not yet released)
-Completed features:
+
+### Compatibility
+
+| OS                      | Compatibility        | Notes                               |
+| :---------------------- | :--------------------| :-----------------------------------|
+| DDWRT on ARMv7          | ✅ Full support      |                                     |
+| DDWRT on MIPS           | ⚠️ Not tested        |                                     |
+| OpenWRT on MIPS         | ⚠️ Not tested        |                                     |
+| Ubuntu 16 on ARMv7      | ⚠️ Not tested        | Should be all OK though.            |
+| Ubuntu 16 on RaspPi 3b+ | ⚠️ Not tested        | Should be all OK though.            |
+| Ubuntu 16 on RaspPi 4   | ⚠️ Not tested        | Should be all OK though.            |
+| Gentoo Linux            | ✅ Full support      |                                     |
+| MacOS 10.15 Catalina    | 💥 Not supported     | Bash 3.x compat require some rework |
+| Windows 10              | 💥 Not supported     | Haven't been tested at all          |
+
+### Features
 
 Be friendly with the API:
 - Don't hit the API all the time.
@@ -30,11 +45,10 @@ Tests:
 - Light testing skeleton
 - Test coverage report
 
-
----
+### TODO
 
 Remaining:
-- Test with MacOS, Gentoo Linux and Raspberry Pi.
+- Fix MacOS Support
 - Add notification support
 
 
