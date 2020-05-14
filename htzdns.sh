@@ -1,18 +1,19 @@
 #!/bin/bash
 
 # Pull functions
-if [ ! -d "${0%/*}/inc" ]; then echo "Missing ./inc/"; exit 1; fi
-for inc in `find ${0%/*}/inc/ -name "*.inc"`; do source "$inc" || { echo "Failed including $inc."; exit 1; }; done
+if [ ! -d "${0%/*}/inc" ]; then printf "Missing ./inc/\n"; exit 1; fi
+for inc in `find ${0%/*}/inc/ -name "*.inc"`; do source "$inc" || { printf "Failed including $inc.\n"; exit 1; }; done
 
 # Map binary dependencies
-MAP_BINS "curl jq grep sed cut date find touch mkdir hostname echo wc" || _ERR "Failed mapping binaries: $B"
-
-# Params handling, and reset params
-PARAMS_PARSER "$@"; set --
+MAP_BINS "curl jq grep sed cut date find touch mkdir hostname printf wc" || _ERR "Failed mapping binaries: $B"
 
 # Pull & validate configuration
 LOAD_CONFIG 			|| _ERR "Failed loading configuration"
+# Params handling, and reset params
+PARAMS_PARSER "$@"; set --
+
 VALIDATE_CONFIG 		|| _ERR "Failed validating configuration"
+
 BUILDER				|| _ERR "Error building configuration"
 # Map vendor scripts
 MAP_VENDOR			|| _ERR "Vendor scripts are missing, did you really git clone --recurse-submodules this?"
@@ -54,7 +55,7 @@ for z in $zones; do
     PARSE_RECORDS_JSON "$rsp_body" || { _WRN "Failed parsing JSON for records for $zone_name, skipping."; continue; }
     FILTER_RECORDS_JSON "$records" || _WRN "Failed filtering exclusion list from records for $zone_name."
     oIFS=$IFS
-    IFS=$($echo -en "\n\b")
+    IFS=$($printf "\n\b")
     for r in $records; do
         SPLIT_RECORDS_ID_NAME_VALUE "$r"
 	# If record is not in zone config, skip this one.
