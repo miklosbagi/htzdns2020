@@ -19,7 +19,7 @@ nl="
 binloc="/bin /usr/bin /usr/local/bin /sbin /usr/sbin /opt/bin /jffs/bin /jffs/sbin /jffs/usr/sbin /jffs/usr/bin"
 
 # simple out msg.
-function _SAY { $echo -ne "$1\n"; }
+function _SAY { $printf -- "$1\n"; }
 # verbose messaging (needs -v turned on)
 function _VRB1 { if [[ $verbose == "1" ]] && [[ $vrb -gt 0 ]]; then _SAY "📢 $@"; fi; }
 function _VRB2 { if [[ $verbose == "1" ]] && [[ $vrb -gt 1 ]]; then _SAY "📢📢 $@;"; fi; }
@@ -34,8 +34,8 @@ function _PRETEND { _SAY "👻 PRETEND: $1"; }
 function FIND_BIN {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"
   for loc in $binloc; do
-      if [ -d "$loc" ] && [ -f "$loc/$1" ]; then 
-         eval "$1"="$loc/$1"; 
+      if [ -d "$loc" ] && [ -f "$loc/$1" ]; then
+         eval "$1"="$loc/$1";
 	 return 0
        fi
   done
@@ -46,14 +46,14 @@ function FIND_BIN {
 # map all binary dependencies
 function MAP_BINS {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"
-   for bin in ${1}; do 
+   for bin in ${1}; do
        FIND_BIN "$bin" || _ERR "Cannot find $bin in PATH or at common locations."
    done
 }
 
 # map all vendor scripts
 function MAP_VENDOR {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   for v in $_VENDOR_DEPENDENCIES; do
       fullpath="${0%/*}/vendor/$v"
       if [ -f $fullpath ]; then
@@ -69,12 +69,12 @@ function MAP_VENDOR {
 
 # load configuration file(s)
 function LOAD_CONFIG {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    d="htzdns.conf htzdns-`$hostname`.conf"
-   for cfg in $d; do 
-       if [ -f "${0%/*}/$cfg" ]; then 
+   for cfg in $d; do
+       if [ -f "${0%/*}/$cfg" ]; then
           source ${0%/*}/$cfg || _ERR "Failed loading config: $cfg"
- 	  cfok=y; 
+ 	  cfok=y;
        fi
    done
    if [[ "$cfgok" != "" ]]; then _ERR "Failed loading configs ($d)."; fi
@@ -82,14 +82,14 @@ function LOAD_CONFIG {
 
 # validate key variables from config, and override with defaults should they not be present.
 function VALIDATE_CONFIG {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [[ "$need_builder" == "1" ]]; then return; fi
    need_builder=0
    if [ -z "$lt" ]; then lt="htzdns-`$hostname`"; fi
+   # if test api key is provided, we may want to use that here
+   if [ ! -z "$test_api" ]; then htz_api_key="$test_api"; fi
    if [ -z "$htz_api_key" ]; then _WRN "No API key was found, launching builder."; need_builder=1; return; fi
    if [ -z "$htz_cache_dir" ]; then _WRN "No htz_cache_dir value was found in htzdns.conf, defaulting to ${0%/*}/data"; htz_cache_dir="data"; return; fi
    # TODO: the record map in config could use better validation.
    if [ -z "$htz_update_zone_record_map" ]; then _WRN "No zone mapping config was found, launching builder"; need_builder=1; return; fi
 }
-
-
