@@ -46,9 +46,18 @@ Tests:
 - Test coverage report
 
 ### TODO
-
+### 1.0 GitHub Release
 Remaining:
-- Fix MacOS Support
-- Add notification support
-
+- 0.3
+- - Fix MacOS Support
+- - Add support for testing for automatically generated IP addresses for a "htzdnstest" called A record
+- 0.4
+- - Capture and report partial successes, e.g. 1 out of 5 updates have failed in bulk ({failed entries:}
+- - Capture and report all successes for notifications ({successful entries:)
+- 0.5
+- - Add notification support for pushover and slack
+- 0.9
+- - Submodule whatismyip to depend on public repo
+- 1.0
+- - Release to github.
 
