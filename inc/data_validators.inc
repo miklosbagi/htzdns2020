@@ -4,14 +4,14 @@
 ### Confirms if $zone_id is present in $zone_config, returns false when that's not the case.
 ### Takes one param: $1 zone_id
 function IS_ZONE_ID_IN_ZONE_CONFIG {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
-  res=`$echo "$zone_config" |$grep -v "^#" |$grep -q ",$1,"` || return 1
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+  res=`$printf "$zone_config" |$grep -v "^#" |$grep -q ",$1,"` || return 1
 }
 
 ### IS_RECORD_IN_ZONE_CONFIG
 function IS_RECORD_IN_ZONE_CONFIG {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
-  res=`$echo "$zone_config" |$grep -v "^#" |$grep -q ",$1$"` || return 1
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+  res=`$printf "$zone_config" |$grep -v "^#" |$grep -q ",$1$"` || return 1
 }
 
 ### IS_VALID_IPV4
@@ -19,10 +19,10 @@ function IS_RECORD_IN_ZONE_CONFIG {
 ### Implements: https://en.wikipedia.org/wiki/Reserved_IP_addresses#IPv4
 ### Takes $1 input: IP address.
 function IS_VALID_IPV4 {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   if [ -z "$1" ]; then return 1; fi
   p="(^0\.)|(^10\.)|(^100\.6[4-9]\.)|(^100\.[7-9]\d\.)|(^100\.1[0-1]\d\.)|(^100\.12[0-7]\.)|(^127\.)|(^169\.254\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\. )|(^172\.3[0-1]\.)|(^192\.0\.0\.)|(^192\.0\.2\.)|(^192\.88\.99\.)|(^192\.168\.)|(^198\.1[8-9]\.)|(^198\.51\.100\.)|(^203.0\.113\.)|(^22[4-9]\.      )|(^23[0-9]\.)|(^24[0-9]\.)|(^25[0-4]\.)"
-  echo "$1" |grep -Eq "$p" && return 1 || return 0
+  $printf "$1" |grep -Eq "$p" && return 1 || return 0
 }
 
 ### TODO: IS_VALID_IPV6
@@ -33,7 +33,7 @@ function IS_VALID_IPV4 {
 ### IPv4-translated addresses (section 2.1 of rfc2765)
 ### based on https://gist.github.com/syzdek/6086792 - TODO: needs intense testing.
 function IS_VALID_IPV6 {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    s="[0-9a-fA-F]{1,4}"
    # TEST: 1:2:3:4:5:6:7:8
    v6pattern="(${s}:){7,7}${s}|"
@@ -61,14 +61,14 @@ function IS_VALID_IPV6 {
    v6pattern="${v6pattern}(${s}:){1,4}:${RE_IPV4}"
 
    # let's kill grep now
-   v=`echo "$1" | grep -Eq "$v6pattern"` && return 1
+   v=`$printf "$1" | grep -Eq "$v6pattern"` && return 1
 }
 
 ### IS_TTL_OK
 ### Option to warn user about TTL that's too high for a dynamic DNS setup.
 ### Treshold is 1 hour.
 function IS_TTL_LOW_ENOUGH {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ "$1" -gt "3600" ]; then return 1; fi
 }
 
@@ -79,20 +79,30 @@ function IS_TTL_LOW_ENOUGH {
 ### NOTE: you may want to make sure your clock's ticking right for this to make sense, especially when using low values.
 ### NOTE: expecting UTC time from the API, returning false should that not be the case.
 function IS_MODIFIED_OUTSIDE_TTL {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # get timezone
-   timezone=`echo "$2" |$cut -d' ' -f3,4`
+   timezone=`$printf -- "$2" |$cut -d' ' -f3,4`
    # throw error when timezone is not UTC as expected.
    if [[ "$timezone" != "+0000 UTC" ]]; then _ERR "The API is not returning modif time in UTC, that's a fatal."; fi
 
    # get datetime, and focus ditch milliseconds
-   zone_datetime=`echo "$2" |$cut -d' ' -f1,2 |$sed -E 's#\.[0-9]+##'`
+   zone_datetime=`$printf -- "$2" |$cut -d' ' -f1,2 |$sed -E 's#\.[0-9]+##'`
+   # test date version
+   date_os=""
+   test_date=`$date -ud"$zone_datetime" > /dev/null 2>&1` || date_os="unix"
    # now get epoch so we can compare.
-   zone_epoch=`date -ud"$zone_datetime" +%s`
+   if [[ "$date_os" != "unix" ]]; then
+      # try linux date (note that DDWRT is not GNU date)
+      zone_epoch=`$date -ud"$zone_datetime" +%s` || { _WRN "Cannot get EPOCH date for comparison for Linux date."; return 1; }
+   else
+      # try unix date (for MacOS)
+      zone_epoch=`$date -j -u -f "%Y-%M-%d %T" "$zone_datetime" +%s` || { _WRN "Cannot get EPOCH date for comparison for Unix date."; return 1; }
+   fi
    # get system UTC epoch
    curr_epoch=`TZ="UTC" $date +%s`
+   _VRB1 "Epoch zone: $zone_epoch, Epoch local: $curr_epoch, TTL: $1"
    diff=$(( curr_epoch - zone_epoch ))
-   if [ "$diff" -gt "$1" ]; then return 0; else return 1; fi
+   if [ "$diff" -gt "$1" ]; then _VRB1 "<< OUT: yes"; return 0; else _VRB1 "<< OUT: NO"; return 1; fi
 }
 
 ### DOES_VALUE_MATCH_HETZNER_VALUE
@@ -100,7 +110,7 @@ function IS_MODIFIED_OUTSIDE_TTL {
 ### This mitigates the scenario of pushing data to the API in case of a cache update (write) failure.
 ### Takes three params: $2 record_value $3 value.
 function DOES_VALUE_MATCH_HETZNER_VALUE {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # empty values are not accepted here
    if [ -z "$1" ] || [ -z "$2" ]; then return 1; fi
    if [[ "$1" != "$2" ]]; then return 1; fi
@@ -110,16 +120,16 @@ function DOES_VALUE_MATCH_HETZNER_VALUE {
 ### Function to avoid sending out malformed json to lower dependency on API json filtering.
 ### Takes input: json data, returns true or false.
 function VALIDATE_JSON {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
-   r=`$echo "$finalized_json" | $jq .` 2>&1 && return 0 || return 1
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+   r=`$printf -- "$finalized_json" | $jq .` 2>&1 && return 0 || return 1
 }
 
 ### IS_UPDATE_EMPTY
 ### In case we have our locally constructed value matching exactly the one in Hetzner's data
 ### we have a scenario of empty updates - this function just confirms that.
-### 
+###
 function IS_EMPTY {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $echo -ne $q\)\(; done`)"
+   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ -z "$1" ]; then return 0; fi
-   if [[ `$echo "${@#}" |$wc -c` -gt "5" ]]; then return 1; fi
+   if [[ `$printf -- "${@#}" |$wc -c` -gt "5" ]]; then return 1; fi
 }
