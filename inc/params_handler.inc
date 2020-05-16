@@ -19,7 +19,6 @@ function PARAMS_PARSER {
           n=`$printf -- "$p" | sed 's#[a-z]#& #g;s# $##'`; ps="$ps $n"
        fi
    done
-   echo $test_api
    vrb=0
    for p in $ps; do
        case $p in
