@@ -10,8 +10,7 @@ function LOAD_CACHE {
   # load lines that are formatted correctly only.
   # formatting is: zone_id,record_id,value.
   # not being too strict with value as we may decide to add text records later on.
-  htz_cache=`$grep -o -w -i '[a-z0-9]\{22,22\},[a-z0-9]\{32,32\},[a-z0-9\.:]\{1,3\}\+' "${cache_file}"`
-  #htz_cache=`$grep -E "^[a-Z0-9]+{22},[a-Z0-9]+{32},[a-z0-9.:]+{7}$" "${cache_file}"`
+  htz_cache=`$grep -i '[a-z0-9]\{22,22\},[a-z0-9]\{32,32\},[a-z0-9\.:]\{2,4\}' "${cache_file}"`
 }
 
 ### Filesystem validation for cache dir and file
