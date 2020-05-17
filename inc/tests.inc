@@ -2,7 +2,11 @@
 ### Functional and unit test mix
 ###
 
-
+### RUN_TESTS
+### Decides whether or not tests should be ran.
+### IN: none
+### OUT: bool
+### Global dependencies: runtests global variable (optional)
 function RUN_TESTS {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [[ "$runtests" != "1" ]]; then return 1; fi
@@ -12,6 +16,11 @@ function RUN_TESTS {
    return 0
 }
 
+### TEST_COVERAGE
+### Calculates test coverage based on unit and functional tests written.
+### IN: none
+### OUT: bool
+### Global dependencies: coverage global variable (optional)
 function TEST_COVERAGE {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [[ "$coverage" != "1" ]]; then return 1; fi
@@ -38,6 +47,13 @@ function TEST_COVERAGE {
    return 0
 }
 
+### GET_UNIT_TESTS
+### Simple static analyzer for htzdns functions, identifies if FUNCTION has a
+### coresponding TEST_FUNCTION pair where unit test is written.
+### Note: having a test pair does not guarantee that it's not a return true.
+### IN: none
+### OUT: none
+### Global dependencies: none
 function GET_UNIT_TESTS {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    unit_tested=0; unit_untested=0
@@ -56,6 +72,13 @@ function GET_UNIT_TESTS {
    (( unit_pdone  = 100/unit_total*unit_tested ))
 }
 
+### GET_FUNCTIONAL_TESTS
+### Simple static analyzer for htzdns functions, identifies the number
+### of test cases (which are all functional for now) declared.
+### Note: having a test case declared does not guarantee that it's not a return true.
+### IN: none
+### OUT: bool
+### Global dependencies: none
 function GET_FUNCTIONAL_TESTS {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # todo: would be nice to have some requirements management to compare TCs to.
@@ -67,25 +90,31 @@ function GET_FUNCTIONAL_TESTS {
    done
 }
 
-###
-### Init tests
-###
-
+### TEST_INIT_ALL
+### Executes all tests in INIT category
+### IN: none
+### OUT: none
+### Global dependencies: none
 function TEST_INIT_ALL {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    TEST_INIT_CONFIGS
 }
 
-###
-### Hetzner API tests
-###
-
+### TEST_API_ALL
+### Executes all tests in API category.
+### IN: none
+### OUT: none
+### Global dependencies: none
 function TEST_API_ALL {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    TC_API_APIKEY || _SAY "  ❌ API Key $htz_api_key is failing" && _SAY "  $r"
 }
 
-# functional tests
+### TC_API_APIKEY
+### Tests acceptance of API key by Hetzner DNS API.
+### IN: none
+### OUT: r (string), response confirmation.
+### Global dependencies: htz_api_key
 function TC_API_APIKEY {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    endpoint="https://dns.hetzner.com/api/v1/zones"
@@ -95,6 +124,11 @@ function TC_API_APIKEY {
    r="✅ Excellent, Hetzner API welcomes $htz_api_key (response: $rsp_code: $err_desc)"
 }
 
+### TEST_API_GET_ALL_ZONES
+### Will test this, but this is a placeholder for testing coverage report.
+### IN: none
+### OUT: none
+### Global dependencies: none
 function TEST_API_GET_ALL_ZONES {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    _SAY "1"
