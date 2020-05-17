@@ -14,6 +14,7 @@ MAP_BINS "curl jq grep sed cut date find touch mkdir hostname printf wc" || _ERR
 
 # Pull & validate configuration
 LOAD_CONFIG 			|| _ERR "Failed loading configuration"
+
 # Params handling, and reset params
 PARAMS_PARSER "$@"; set --
 
@@ -84,6 +85,4 @@ FINALIZE_JSON_LIST "records" "$bulk_construct"
 BULK_UPDATE_RECORDS "$finalized_json" || { if [[ "$pretend" != "1" ]]; then _ERR "Failed updating records 😩"; fi; }
 WRITE_NEW_CACHE || _WRN "Failed writing new data to $cache_file, we will be hitting the API every time until this is solved."
 
-# NOTIFY WITH DETAILS
-
-# ADD TO UPDATE JSON ONLY IN CASE OUR VALUE DIFFERS (failed to update cache scenario)
+exit 0
