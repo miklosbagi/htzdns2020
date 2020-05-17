@@ -1,5 +1,9 @@
 ### Test data for htzdns tests
 
+
+###
+### Static data variables
+###
 corrupt_htz_host_exclude0=""
 corrupt_htz_host_exclude1="@;"
 
@@ -103,5 +107,16 @@ ipv4_test_data_pass="
 84.236.105.98
 "
 
+###
+### Test data generator fucntions
+###
 
-
+### TEST_GET_IPV4_ADDRESS
+### Generates random IPv4 address in a single address range
+### to be used in test Updates
+### IN: none
+### OUT: ipv4_test_address global variable
+### Global dependencies: rebuild
+function TEST_GET_IPV4_ADDRESS {
+    $printf "mock"
+}
