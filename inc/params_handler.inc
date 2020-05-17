@@ -1,4 +1,18 @@
-### HTZ Params Parser
+### htzdns/inc/params_handler.inc
+### Parses arguments and set default runtime params based on user input.
+
+### PARAMS_PARSER
+### Filters down arguments to a single letter list and iterates through them to
+### see what runtime params will be set.
+### IN: $@ list of arguments (strings)
+### OUT: global variables: test_api_key (to override config's)
+###                        force (optional runtime param)
+###                        rebuild (optional runtime param)
+###                        test (optional runtime param)
+###                        verbose (optional runtime param)
+###                        vrb (optional verbosity level flag)
+###                        coverage (optional runtime param)
+### Global dependencies: rebuild
 
 function PARAMS_PARSER {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
@@ -37,7 +51,11 @@ function PARAMS_PARSER {
    _VRB1 "Params: $sw"
 }
 
+### PARAMS_PARSER
 ### Usage manual next to params, so we can keep it updated.
+### IN: none
+### OUT: none
+### Global dependencies: none
 function USAGE {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    _SAY "\n 🌎 htzdns: A DNS record updater for dynamic IP addresses for domains managed at hetzner.de\n"
