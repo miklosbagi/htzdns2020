@@ -113,6 +113,13 @@ function DOES_VALUE_MATCH_HETZNER_VALUE {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # empty values are not accepted here
    if [ -z "$1" ] || [ -z "$2" ]; then return 1; fi
+   # handle force updates here (#5)
+   if [[ "$force" == "1" ]]; then
+      _VRB1 "Force update is on, let's add this."
+      _PRETEND "Forcing update."
+      return 1
+   fi
+   # check for difference
    if [[ "$1" != "$2" ]]; then return 1; fi
 }
 
@@ -127,14 +134,15 @@ function VALIDATE_JSON {
 ### IS_UPDATE_EMPTY
 ### In case we have our locally constructed value matching exactly the one in Hetzner's data
 ### we have a scenario of empty updates - this function just confirms that.
-###
+### Takes input: $1: bulk_construct (list of arguments)
+### OUT: bool (our update is empty / not empty)
 function IS_EMPTY {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+   # if there's nothing, say it's empty.
    if [ -z "$1" ]; then return 0; fi
-   if [[ `$printf -- "${@#}" |$wc -c` -gt "5" ]]; then
-      _PRETEND "IP matches at Hetzner, not updating."
-      return 1
-   else
-     _VRB1 "Empty, but that is: less than 5 chars in length: \"${@#}\""
+   # if all params are longer than 5 chars, we are not empty.
+   if [[ `$printf -- "${@#}" |$wc -c` -gt "5" ]]; then return 1;
+   # otherwise, we have some junk data, but we are empty.
+   else _VRB1 "Empty, but that is: less than 5 chars in length: \"${@#}\""; return 0;
    fi
 }
