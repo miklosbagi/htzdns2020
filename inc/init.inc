@@ -28,7 +28,7 @@ function _ERR { _SAY "💥 ERROR: $1"; exit 1; }
 # comminicate warnings, don't exit
 function _WRN { _SAY "⚠️  WARNING: $1"; }
 # pretend messages
-function _PRETEND { _SAY "👻 PRETEND: $1"; }
+function _PRETEND { if [[ $pretend == "1" ]]; then _SAY "👻 PRETEND: $1"; fi; }
 
 # Find binary files in various locations (usually in PATH)
 function FIND_BIN {
