@@ -1,19 +1,21 @@
 # Release notes
-## 1.0 (not yet released)
+
+## 0.3.0.0
 
 ### Compatibility
-
 | OS                      | Compatibility        | Notes                               |
 | :---------------------- | :--------------------| :-----------------------------------|
 | DDWRT on ARMv7          | ✅ Full support      |                                     |
-| DDWRT on MIPS           | ⚠️ Not tested        |                                     |
-| OpenWRT on MIPS         | ⚠️ Not tested        |                                     |
-| Ubuntu 16 on ARMv7      | ⚠️ Not tested        | Should be all OK though.            |
-| Ubuntu 16 on RaspPi 3b+ | ⚠️ Not tested        | Should be all OK though.            |
-| Ubuntu 16 on RaspPi 4   | ⚠️ Not tested        | Should be all OK though.            |
+| DDWRT on MIPS           | ⚠️ Not tested         |                                     |
+| OpenWRT on MIPS         | ⚠️ Not tested         |                                     |
+| Ubuntu 16 on ARMv7      | ⚠️ Not tested         | Should be all OK though.            |
+| Ubuntu 16 on RaspPi 3b+ | ⚠️ Not tested         | Should be all OK though.            |
+| Ubuntu 16 on RaspPi 4   | ⚠️ Not tested         | Should be all OK though.            |
 | Gentoo Linux            | ✅ Full support      |                                     |
-| MacOS 10.15 Catalina    | 💥 Not supported     | Bash 3.x compat require some rework |
+| MacOS 10.15 Catalina    | ✅ Full support      |                                     |
 | Windows 10              | 💥 Not supported     | Haven't been tested at all          |
+
+## 1.0 (not yet released)
 
 ### Features
 

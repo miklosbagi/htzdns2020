@@ -10,6 +10,7 @@ TL;DR: Rewrite of hetzner-dyndns php script in bash, so we can run on a weak ope
 - Do you want to avoid paying monthly for a DYNDNS service, or update free tier every so often?
 - Do you have a domain at Hetzner?
 - Would a mysite.mydomain.tld sound good to you?
+=
 
 If you answered with "no" to any of the above questions, this is not for you. In any other case, read on.
 
@@ -51,27 +52,31 @@ Submodule path 'vendor/whatismyip': checked out '101322e15ffb5ec58fef97b295a4ce4
 ```
 
 ## Configure
-Run htzdns.sh -r to rebuild configuration for your host:
+Run htzdns.sh -r to rebuild configuration for your host, and follow along.
+Here is what's going to happen:
+- You will be asked for your Hetzner API key.
+- Once provided you will get asked for each record in each zone to be selected for dyndns update, starting with the first zone.
+- Set the number of line you are intetested in, and press enter.
+- When you are done configuring the actual zone, press enter (empty input).
+- Keep going until you are done with all your zones.
+- A configuration file will be revealed and written for you.
+- A pretend-run will be executed to see how we are doing (with no changes made).
+
+
+### In a terminal
+Note: you don't need root or anything, any user should be able to run this once binary dependencies are all in place.
 
 ```
-$ cd htzdns/
-$ ./htzdns.sh -r
-⚠️  WARNING: Could not find config: htzdns-testhost.conf
-
+[myuser@mydevice]$# cd htzdns/
+[myuser@mydevice htzdns ]$# ./htzdns.sh
 ⚠️  WARNING: No API key was found, launching builder.
+A few items are missing from the config (htzdns-mb-macbook), we need to build them in order to continue.
+This is ideally performed only once, but you can force this by setting the --rebuild flag to ./htzdns.sh.
 
-⚠️  WARNING: No zone mapping config was found, launching builder
-
-Ok, let's rebuild configuration.
-Configuration will be: htzdns-testhost.
+Configuration will be: htzdns-mb-macbook.conf
 🔑 API key set:
-   Please go to https://dns.hetzner.com/settings/api-token, generate an API token, and provide it here: 
-```
-
-Enter your Hetzner API key you obtained from dns.htzner.com
-
-
-```
+   Please go to https://dns.hetzner.com/settings/api-token, generate an API token, and provide it here: m3AvUdZAiuaU15qNJoEHzBTBAdSLnOM9
+   
    🔗 Checking mapping configuration...
 
    ⚙️  mbag.at has the following configuration options:
@@ -119,24 +124,59 @@ notexample.net,ABC1DEfg2hIJkl3M456Nop,lan,1b1c234de56fg7890h1ijk23lMNO78pQ
 "
 
 Are we OK to save to ./htzdns-rt0.conf? (Y/n)
+
+✅ Excellent, configuration saved, cache flushed. We are done here.
+   Running ./htzdns.sh with pretend to see what would be done. 😊
+
+👻 PRETEND: Would write the following data to cache file ./data/cache.data:
+2E84VpYX4J4x4AmdjsuCqX,8034ceb40747dd26a367b83dcdcd19d0,178.164.238.237
+
+[myuser@mydevice]$#
+
 ```
-The above configuration is an example *with invalid api key, host and record info* - only for representation.
-Hit Y and enter to save the config.
+
+And that's it :)
 
 ## Usage
 Normally you run this on its own, and allow hosts to be updated.
 However, there are usage flags you can use:
 
 ```
+ ℹ️  Usage params: [ -h | h | --help ]
+                  [ -pfrvv | pfrvv | --pretend --force --rebuild --verbose --verbose ]
+                  [ -t | t | --test ]
+
+   -f | f | --force	Force update to hetzner regardless of cache
    -r | r | --rebuild	Run configuration builder (interactive)
-   -p | p | --pretend   Do not make any changes, only show what would be done.
-   -v | v | --verbose   See what is happening.
-   -t | t | --test      Run tests (confirms compatibilty, warns on significant API changes)
+   -p | p | --pretend	Do not make any changes, only show what would be done.
+   -v | v | --verbose	See what is happening.
+   -t | t | --test	Run tests (confirms compat, cries out on API changes)
    -h | h | --help	This usage manual.
+
+ Certain arguments can be used in combination with each other.
+ The following scenario would require you to add multiple arguments:
+ - You don't want to write any changes (pretend)
+ - You want to see what would be updated regardless of what is cached
+   or data in hetzner records (force)
+ - You want to build a new configuration to add more records (rebuild)
+ Then you can execute with --pretend --force --rebuild (or -prf for short)
+
+ # ./htzdns.sh -prf
+
+ Adding verbosity or double verbosity to this mix is also possible as -prfvv.
 ```
-It is recommended to run this with the -p flag for the first time to see if you run into any obvious errors.
-The -v flag will spit out a bunch of more information (verbose).
-The -vv flag acts as double verbose, e.g. not only debug functions are reported, but values sent back & forth between internal functions too.
+
+What these actually mean:
+- force: you can update whe you have no IP changed at all. Otherwise, htzdns will aim to avoid unnecessary calls to the API, and will stop running when your current IP address is in its cache file, or in case your current IP address matches the one in Hetzner's records.
+- rebuild: you can re-launch the configuration to make changes. It will guide you through the process again, but you can "enter yourself through" much of it, as settings are read from the saved config.
+- verbose: htzdns is designed to run quietly (e.g. what you would expect in cron) - however, for debugging purposes, you can set it to be verbose. 
+- pretend: show what would be done, but do not execute. This applies to writing cache file, or updating record(s) at Hetzner.
+- test runs tests (not much of these just yet, but will do later on).
+
+
+Note on verbosity levels:
+- A simple -v will display all the internal functions and additional information to understand what is happening.
+- Double verbosity (-vv) will display all data that's being sent between the functions (including api key, JSON results, etc).
 
 Check update on your hetzner domain control ui.
 If all looks cool, feel free to cron this for every minute.
@@ -146,8 +186,17 @@ Few things to keep in mind:
 1. It is safe to run this every minute, as a local cache file is present with the configured hosts and values, you will not be hitting the API unless there is a change in your IP.
 2. Depending on whatismyip - this tool has a few hosts configured, you won't be hitting the same host over and over again with this either.
 
-# More info
-More information is available in the [Docs](docs/) section, more importantly:
-- [Release notes](docs/release_notes.md)
-- [Backlog](docs/todo.md)
-- [Configuration](docs/configuration.md)
+# Finalizing settings
+## Adding to cron
+Decide what user you want to use to run htzdns with. In the following example, user "nobody" will be used.
+
+Run sudo -u nobody crontab -e, and add the following line: 
+
+```
+*/15 * * * * a="/path/to/htzdns/htzdns.sh"; [ -f $a ] && $a
+```
+
+Where /path/to/htzdns is obviously a full path to where you have cloned this repo to.
+
+# Docs
+More information is available in the [Docs](docs/) section.
