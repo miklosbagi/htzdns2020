@@ -1,8 +1,20 @@
-### Request specific fucntions, anything to make our API calls fly.
+### htzdns/inc/request_handler.inc
+### Request specific fucntions, anything to make API calls fly.
 
-# GENERAL REQUEST FUNCTION
-# Parametering in any order: type (get/post/put), endpoint (https://...),
-# request params (?this=that), request body (json object), headers array ("Header1: yes" HeaderN: value)
+### REQUEST
+### General request function to deal with GET / PUT (and maybe post in future)
+### Takes a set of arguments and identifies curl arguments based on values provided.
+### Then executes the GET or PUT request with the appropriate data.
+### Separates out response code and response body
+### TODO: Cleanup REQUEST as this is way too haeavy.
+### IN: $@ multiple arguments in any order
+###        headers (string): a list of -H Header: header formatted args
+###        endpoint (string): https://api.*
+###        request params (string): optional for GET params
+###        request body (string): optional request body (e.g. JSON)
+###        reqtype (string): get/post/put
+### OUT: global variables: rsp_body and rsp_code, bool.
+### Global dependencies: none
 function REQUEST {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # add debug option
@@ -63,9 +75,12 @@ function REQUEST {
    if [[ "$rsp_code" != "200" ]]; then return 1; fi
 }
 
-# PARAMS_BUILDER
-# The role of this function is to construct params key value pairs as per data provided.
-# Returns full params list as $params
+### PARAMS_BUILDER
+### Concatenates params key value pairs into a single list to be used in REQUEST.
+### for example: a=b and c=d will become "?a=b&c=d".
+### IN: $@ list of params (string: key=value)
+### OUT: $params global variable
+### Global dependencies: none
 function PARAMS_BUILDER {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    params=""
@@ -80,26 +95,12 @@ function PARAMS_BUILDER {
    if [ ! -z "$params" ]; then params=`$printf -- "?$params" |$sed 's#^&##'`; fi
 }
 
-# HEADER_BUILDER
-# Building an array so we don't get lost in the impossible '" quoting with curl later on.
-function HEADERS_BUILDER {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
-   # local -n arr="headers";
-   #local arr="headers";
-   #for header in "$@"; do
-  #     arr+=('-H' "$header")
-  # done
-  headers=()
-  for header in "$@"; do
-      headers+=('-H' "$header")
-  done
-
-  echo "${FUNCNAME} ${headers[@]}"
-}
-
-# JSON BUILDER
-# Builds JSON object out of any number of arguments (key=value) provided.
-# NOTE Limitation: this is 1 level in depth only.
+### JSON BUILDER
+### Builds JSON object out of any number of arguments (key=value) provided.
+### NOTE Limitation: this is 1 level in depth only.
+### IN: $@ list of params (string: key=value)
+### OUT: establishes $json_leaf global variable
+### Global dependencies: none
 function JSON_BUILDER {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # don't call without params.
@@ -109,7 +110,7 @@ function JSON_BUILDER {
    # iterate through params, and add meaningful to the rest of params.
    arg=0
    for param in "$@"; do
-       (( arg=arg+1))
+       (( arg=arg+1 ))
        param_name=`$printf "$param" |cut -d= -f1`
        param_value=`$printf -- "$param" |cut -d= -f2`
        # add this entry only in case we have value set
