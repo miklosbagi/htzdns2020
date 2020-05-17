@@ -1,8 +1,11 @@
-### Cache file specific
+### htzdns/inc/cache_handler.inc
+### Collection of all cache specific functions.
 
-###
 ### LOAD_CACHE
 ### Sucks up cache data
+### IN: none
+### OUT: establishes htz_cache global variable. Returns bool.
+### Global dependencies: htz_cache_dir
 function LOAD_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   cache_file="${0%/*}/$htz_cache_dir/cache.data"
@@ -10,10 +13,14 @@ function LOAD_CACHE {
   # load lines that are formatted correctly only.
   # formatting is: zone_id,record_id,value.
   # not being too strict with value as we may decide to add text records later on.
-  htz_cache=`$grep -i '[a-z0-9]\{22,22\},[a-z0-9]\{32,32\},[a-z0-9\.:]\{2,4\}' "${cache_file}"`
+  htz_cache=`$grep -i '[a-z0-9]\{22,22\},[a-z0-9]\{32,32\},[a-z0-9\.:]\{2,4\}' "${cache_file}"` || return 1
 }
 
-### Filesystem validation for cache dir and file
+### VALIDATE_CACHE_FILESYSTEM
+### Filesystem validation for cache directory and file.
+### IN: none
+### OUT: none (may exit to shell)
+### Global dependencies: cache_file, htz_cache_dir
 function VALIDATE_CACHE_FILESYSTEM {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   # if we don't have a cache dir, attempt to create it
@@ -25,23 +32,30 @@ function VALIDATE_CACHE_FILESYSTEM {
   fi
 }
 
-### IS_VALID_CACHE
-### Run a few tests on our cache data to figure if we can identify a rebuild requirement early on.
+### VALIDATE_CACHE
+### Run a few tests on our cache data to figure if we can identify a rebuild
+### requirement early on.
+### IN: none
+### OUT: bool
+### Global dependencies: htz_cache
 function VALIDATE_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
-  invalid_cache="1"
   # invalid if empty
   if [ -z "$htz_cache" ]; then return 1; fi
   # total lines
   total_cache_lines=`$printf -- "$htz_cache\n" | $wc -l`
   # invalid if more than 50 lines
-  if [[ "$total_cache_lines" -gt "50" ]]; then _WRN "More than 50 records to be updated? Unlikely."; return 1; fi
-  invalid_cache="0"
+  if [[ "$total_cache_lines" -gt "50" ]]; then
+     _WRN "More than 50 records to be updated? Unlikely."; return 1;
+  fi
 }
 
 ### IS_IP_IN_CACHE
-### Attempts to read current cache and identify if we have all the entries having the curent IP.
-### Takes one param: ip
+### Attempts to read current cache and identify if we have all the entries
+### having the curent IP.
+### IN: $1 - current_ip, string.
+### OUT: bool
+### Global dependencies: htz_cache
 function IS_IP_IN_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   if [ -z "$htz_cache" ]; then return 1; fi
@@ -50,8 +64,10 @@ function IS_IP_IN_CACHE {
 }
 
 ### ADD_ITEM_TO_CACHE
-### Will add (or replace existing) item to cache with new value(s).
-### Takes $1 zone_id, $2 record_id, $3 value as params.
+### Will add, or replace an existing item to/in cache with new value(s).
+### IN: $1 zone_id (string), $2 record_id (string), $3 current_ip (string).
+### OUT: updates global variable: htz_cache, returns bool.
+### Global dependencies: htz_cache
 function ADD_ITEM_TO_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   # no empty params
@@ -70,6 +86,11 @@ function ADD_ITEM_TO_CACHE {
   VALIDATE_CACHE || return 1
 }
 
+### WRITE_NEW_CACHE
+### Persists cache from memory to file, given pretend is not set.
+### IN: none
+### OUT: bool
+### Global dependencies: htz_cache
 function WRITE_NEW_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   # cleanup empty lines
@@ -86,6 +107,7 @@ function WRITE_NEW_CACHE {
 ### Function to wipe cache information when needed (e.g. config rebuild)
 ### IN: none
 ### OUT: bool (sucessful flush or error)
+### Global dependencies: cache_file
 function FLUSH_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   if [ -f "$cache_file" ]; then $printf "" > "$cache_file" || return 1; fi
