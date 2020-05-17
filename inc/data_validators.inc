@@ -132,7 +132,7 @@ function IS_EMPTY {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ -z "$1" ]; then return 0; fi
    if [[ `$printf -- "${@#}" |$wc -c` -gt "5" ]]; then
-      _VRB1 "More than 5 chars in length, not empty.";
+      _PRETEND "IP matches at Hetzner, not updating."
       return 1
    else
      _VRB1 "Empty, but that is: less than 5 chars in length: \"${@#}\""
