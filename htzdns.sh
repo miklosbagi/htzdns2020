@@ -31,7 +31,7 @@ LOAD_CACHE
 # Get invalid_cache=0/1 so we can act later on it.
 VALIDATE_CACHE
 # If this ip is the only one we have in the cache; if so, it's safe to exit (uness we want to build cache)
-IS_IP_IN_CACHE "$current_ip"	&& { if [[ "$force" != "1" ]]; then exit 0; fi; }
+IS_IP_IN_CACHE "$current_ip"	&& { if [[ "$force" != "1" ]]; then _PRETEND "Current IP is cached, not updating."; exit 0; fi; }
 
 # DO WE HAVE CACHE FOR ALL ITEMS WE HAVE CONFIG FOR?
 
