@@ -54,19 +54,19 @@ function BUILDER_ZONES {
        # keep editing until config is considered complete
        while true; do
          n=0
-  	 oIFS=$IFS
+         oIFS=$IFS
       	 IFS=$($printf "\n\b")
          for r in $records; do
              (( n=n+1))
-	     SPLIT_RECORDS_ID_NAME_VALUE "$r"
-	     BUILDER_IS_RECORD_CONFIGURED "$record_id" && mark="✅" || mark=""
-	     _SAY "    [$n] $record_name $mark"
+	           SPLIT_RECORDS_ID_NAME_VALUE "$r"
+	           BUILDER_IS_RECORD_CONFIGURED "$record_id" && mark="✅" || mark=""
+	           _SAY "    [$n] $record_name $mark"
          done
-	 IFS=$oIFS
+	       IFS=$oIFS
          _SAY "\n   Records marked with ✅ are currently configured.\n   Swith these on/off individually by typing the line number, or hit enter to continue [1-$n]:"
          read -p " " r </dev/tty ; [ "$r" = "" ] && break;
          BUILDER_SWITCH_RECORD_IN_CONFIG "$r"
-	 _SAY "Configuration updated, here's your new list:"
+	       _SAY "Configuration updated, here's your new list:"
        done
        ADD_TO_ALL_ZONES_CONFIG "$zone_config"
   done
@@ -94,7 +94,11 @@ htz_update_zone_record_map=\"${nl}${all_zones_config}${nl}\"
    read -p " " r </dev/tty ; [ "$r" = "y" ] || { _SAY "Ok, not overwriting."; return; }
    $printf "$config_out\n" > ${0%/*}/htzdns-`hostname`.conf || return 1
 
-   _SAY "\n✅ Excellent, we are done here."
+   # Need to load cache and flush it, otherwise we may not update the newly configured records (#1)
+   LOAD_CACHE
+   FLUSH_CACHE || _WRN "Tried flushing cache file, but failed. Please delete $cache_file manually."
+
+   _SAY "\n✅ Excellent, configuration saved, cache flushed. We are done here."
    _SAY "   Running ${0} with pretend to see what would be done. 😊\n"
    pretend="1"
 }

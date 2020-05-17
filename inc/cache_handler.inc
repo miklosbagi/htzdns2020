@@ -81,3 +81,13 @@ function WRITE_NEW_CACHE {
      _PRETEND "Would write the following data to cache file ${cache_file}:\n${htz_cache_new}\n"
   fi
 }
+
+### FLUSH_CACHE
+### Function to wipe cache information when needed (e.g. config rebuild)
+### IN: none
+### OUT: bool (sucessful flush or error)
+function FLUSH_CACHE {
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+  if [ -f "$cache_file" ]; then $printf "" > "$cache_file" || return 1; fi
+  _VRB1 "Flushed cache $cache_file"
+}
