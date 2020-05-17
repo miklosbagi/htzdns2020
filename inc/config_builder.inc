@@ -1,5 +1,11 @@
-### Configuration Builder
+### htzdns/inc/config_builder.inc
+### Everything required to interatcively build configuration files for this host.
 
+### BUILDER
+### Initializes build, kicks off all builder functions as necessary
+### IN: none
+### OUT: none
+### Global dependencies: rebuild
 function BUILDER {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [[ -z $rebuild && $need_builder == "0" ]]; then return; fi
@@ -15,6 +21,11 @@ function BUILDER {
    BUILD_CONFIG
 }
 
+### BUILDER_APIKEY
+### Builder for getting, testing and adding Hetzner API key to configuration.
+### IN: none
+### OUT: establishes htz_api_key global variable.
+### Global dependencies: htz_api_key
 function BUILDER_APIKEY {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    _SAY "🔑 API key set: $htz_api_key"
@@ -35,6 +46,13 @@ function BUILDER_APIKEY {
    _SAY "   $r"
 }
 
+### BUILDER_ZONES
+### Builds zone and record specific configuration.
+### Fetches all zones from API with all zone specific records, and asks user
+### to select & mark the ones to be updated by htzdns.
+### IN: none
+### OUT: establishes zone_config global variable, bool and may exit to shell.
+### Global dependencies: none
 function BUILDER_ZONES {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    _SAY "🔗 Checking mapping configuration..."
@@ -73,10 +91,17 @@ function BUILDER_ZONES {
   if [ -z "$all_zones_config" ]; then _ERR "You have not configured any records to be updated. Exiting."; fi
 }
 
+### BUILD_CONFIG
+### Fills configuration template and compares if new configuration is different
+### from the one we have saved for this host.
+### Flushes cache in case new config is written, or returs w/o touching config.
+### IN: none
+### OUT: file (htzdns-hostname.conf), bool, may exit to shell.
+### Global dependencies: none
 function BUILD_CONFIG {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    _SAY "\n⌛ Building config..."
-   config_template="### Automatically generated htzdns-`hostname`.conf (`date +%Y-%m-%d' '%H:%M:%S`):
+   config_template="### Automatically generated htzdns-`$hostname`.conf (`$date +%Y-%m-%d' '%H:%M:%S`):
 ### for manual modifications, take a peak in htzdns.conf, we have quite some docs there.
 htz_api_key=\"$htz_api_key\"
 htz_update_zone_record_map=\"${nl}${all_zones_config}${nl}\"
@@ -87,12 +112,12 @@ htz_update_zone_record_map=\"${nl}${all_zones_config}${nl}\"
 
    _SAY "✅ Configuration is successfully constructed.\n"
    _SAY "👁️  Please take a moment to eyeball the configuration below,"
-   _SAY "   and confirm that ${0%/*}/htzdns-`hostname`.conf can be updated.\n"
+   _SAY "   and confirm that ${0%/*}/htzdns-`$hostname`.conf can be updated.\n"
    _SAY "$config_out\n"
 
-   $printf "Are we OK to save to ${0%/*}/htzdns-`hostname`.conf? (Y/n)"
+   $printf "Are we OK to save to ${0%/*}/htzdns-`$hostname`.conf? (Y/n)"
    read -p " " r </dev/tty ; [ "$r" = "y" ] || { _SAY "Ok, not overwriting."; return; }
-   $printf "$config_out\n" > ${0%/*}/htzdns-`hostname`.conf || return 1
+   $printf "$config_out\n" > ${0%/*}/htzdns-`$hostname`.conf || return 1
 
    # Need to load cache and flush it, otherwise we may not update the newly configured records (#1)
    LOAD_CACHE
@@ -103,6 +128,12 @@ htz_update_zone_record_map=\"${nl}${all_zones_config}${nl}\"
    pretend="1"
 }
 
+### BUILDER_CONFIG_DIFF
+### Reads up host specific configuration from file, and compares contents to the
+### variable BUILD_CONFIG function put together.
+### IN: $1 config_out (string (long))
+### OUT: bool
+### Global dependencies: none
 function BUILDER_CONFIG_DIFF {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    config_present="${0%/*}/htzdns-`hostname`.conf"
@@ -115,17 +146,24 @@ function BUILDER_CONFIG_DIFF {
 
 ### BUILDER_IS_RECORD_CONFIGURED
 ### identifies whether or not the current record is in the confguration
-### takes a single record id as input, expects $zone_config to be available
 ### zone_config can be empty when this is called.
+### IN: $1 record_id (string)
+### OUT: bool
+### Global dependencies: zone_config
 function BUILDER_IS_RECORD_CONFIGURED {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # check if record matches
-   if [[ `$printf "$zone_config" | $grep "$1" | $cut -d, -f4` == "$1" ]]; then return; else return 1; fi
+   if [[ `$printf "$zone_config" | $grep "$1" | $cut -d, -f4` == "$1" ]]; then return
+   else return 1
+   fi
 }
 
 ### BUILDER_SWITCH_RECORD_IN_CONFIG
 ### switches an individual record on/off in config
-### takes line number, uses $records and $zone_config
+### IN: $1 (line_number (r))
+### OUT: updates zone_config, bool
+### Global dependencies: records (from loop), zone_id (from loop),
+###                      zone_name (from loop), zone_config, nl
 function BUILDER_SWITCH_RECORD_IN_CONFIG {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ -z $1 ]; then return 1; fi
@@ -152,7 +190,9 @@ function BUILDER_SWITCH_RECORD_IN_CONFIG {
 
 ### ADD_TO_ALL_ZONES_CONFIG
 ### Creates a consolidated zones config, using all individual zone_configs.
-### Takes one param: $1 zone_config
+### IN: $1 (zone_config)
+### OUT: updates all_zone_config, bool
+### Global dependencies: zone_config
 function ADD_TO_ALL_ZONES_CONFIG {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ -z "$1" ]; then _VRB1 "<< zone_config variable empty"; return 1; fi
