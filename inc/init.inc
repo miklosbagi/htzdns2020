@@ -59,7 +59,7 @@ function FIND_BIN {
 function MAP_BINS {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"
    for bin in ${1}; do
-       FIND_BIN "$bin" || _ERR "Cannot find $bin in PATH or at common locations."
+       FIND_BIN "$bin" || { printf "💥 ERROR: Cannot find $bin in PATH or at common locations.\n"; exit 1; }
    done
 }
 

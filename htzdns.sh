@@ -10,7 +10,7 @@ if [ ! -d "${0%/*}/inc" ]; then printf "Missing ./inc/\n"; exit 1; fi
 for inc in `find ${0%/*}/inc -name "*.inc"`; do source "$inc" || { printf "Failed including $inc.\n"; exit 1; }; done
 
 # Map binary dependencies
-MAP_BINS "curl jq grep sed cut date find touch mkdir hostname printf wc" || _ERR "Failed mapping binaries: $B"
+MAP_BINS "printf find grep sed cut date touch mkdir hostname wc curl jq" || _ERR "Failed mapping binaries: $B"
 
 # Pull & validate configuration
 LOAD_CONFIG 			|| _ERR "Failed loading configuration"
