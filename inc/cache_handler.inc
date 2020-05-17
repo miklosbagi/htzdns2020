@@ -46,7 +46,7 @@ function VALIDATE_CACHE {
 function IS_IP_IN_CACHE {
   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 ":: in: (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   if [ -z "$htz_cache" ]; then return 1; fi
-  res=`$printf "$htz_cache" |grep -v ",$1$"`
+  res=`$printf "$htz_cache" |$grep -v ",$1$"`
   if [ -z "$res" ]; then return 0; else return 1; fi
 }
 
