@@ -1,72 +1,48 @@
-### Data validation
+### htzdns/inc/data_validators.inc
+### Everything that validates data to a specific standard.
 
 ### IS_ZONE_ID_IN_ZONE_CONFIG
-### Confirms if $zone_id is present in $zone_config, returns false when that's not the case.
-### Takes one param: $1 zone_id
+### Confirms if $zone_id is present in $zone_config, returns false when that's
+### not the case. (TODO: get better regex for IS_ZONE_ID_IN_ZONE_CONFIG)
+### IN: $1 zone_id (string)
+### OUT: bool
+### Global dependencies: zone_config
 function IS_ZONE_ID_IN_ZONE_CONFIG {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   res=`$printf "$zone_config" |$grep -v "^#" |$grep -q ",$1,"` || return 1
 }
 
 ### IS_RECORD_IN_ZONE_CONFIG
+### Confirms if record is in zone config (TODO: get better regex for IS_RECORD_IN_ZONE_CONFIG)
+### IN: $1 record_id (string)
+### OUT: bool
+### Global dependencies: zone_config
 function IS_RECORD_IN_ZONE_CONFIG {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   res=`$printf "$zone_config" |$grep -v "^#" |$grep -q ",$1$"` || return 1
 }
 
 ### IS_VALID_IPV4
-### Checks an IPv4 address for formatting and returns false in case the input doesn't look like one.
+### Checks that an IPv4 address is in the correct format, and that it is a WAN
+### address, not an internal or reserved one.
 ### Implements: https://en.wikipedia.org/wiki/Reserved_IP_addresses#IPv4
-### Takes $1 input: IP address.
+### (TODO: split IS_VALID_IPV4 REGEX into human interpretable chunks)
+### IN: $1 current_ip (string)
+### OUT: bool
+### Global dependencies: none
 function IS_VALID_IPV4 {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
+  _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
   if [ -z "$1" ]; then return 1; fi
-  p="(^0\.)|(^10\.)|(^100\.6[4-9]\.)|(^100\.[7-9]\d\.)|(^100\.1[0-1]\d\.)|(^100\.12[0-7]\.)|(^127\.)|(^169\.254\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\. )|(^172\.3[0-1]\.)|(^192\.0\.0\.)|(^192\.0\.2\.)|(^192\.88\.99\.)|(^192\.168\.)|(^198\.1[8-9]\.)|(^198\.51\.100\.)|(^203.0\.113\.)|(^22[4-9]\.      )|(^23[0-9]\.)|(^24[0-9]\.)|(^25[0-4]\.)"
-  $printf "$1" |grep -Eq "$p" && return 1 || return 0
-}
-
-### TODO: IS_VALID_IPV6
-### zero compressed IPv6 addresses (section 2.2 of rfc5952)
-### link-local IPv6 addresses with zone index (section 11 of rfc4007)
-### IPv4-Embedded IPv6 Address (section 2 of rfc6052)
-### IPv4-mapped IPv6 addresses (section 2.1 of rfc2765)
-### IPv4-translated addresses (section 2.1 of rfc2765)
-### based on https://gist.github.com/syzdek/6086792 - TODO: needs intense testing.
-function IS_VALID_IPV6 {
-   _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
-   s="[0-9a-fA-F]{1,4}"
-   # TEST: 1:2:3:4:5:6:7:8
-   v6pattern="(${s}:){7,7}${s}|"
-   # TEST: 1::                 1:2:3:4:5:6:7::
-   v6pattern="${v6pattern}(${s}:){1,7}:|"
-   # TEST: 1::8                1:2:3:4:5:6::8  1:2:3:4:5:6::8
-   v6pattern="${v6pattern}(${s}:){1,6}:${s}|"
-   # TEST: 1::7:8              1:2:3:4:5::7:8  1:2:3:4:5::8
-   v6pattern="${v6pattern}(${s}:){1,5}(:${s}){1,2}|"
-   # TEST: 1::6:7:8            1:2:3:4::6:7:8  1:2:3:4::8
-   v6pattern="${v6pattern}(${s}:){1,4}(:${s}){1,3}|"
-   # TEST: 1::5:6:7:8          1:2:3::5:6:7:8  1:2:3::8
-   v6pattern="${v6pattern}(${s}:){1,3}(:${s}){1,4}|"
-   # TEST: 1::4:5:6:7:8        1:2::4:5:6:7:8  1:2::8
-   v6pattern="${v6pattern}(${s}:){1,2}(:${s}){1,5}|"
-   # TEST: 1::3:4:5:6:7:8      1::3:4:5:6:7:8  1::8
-   v6pattern="${v6pattern}${s}:((:${s}){1,6})|"
-   # TEST: ::2:3:4:5:6:7:8     ::2:3:4:5:6:7:8 ::8             ::
-   v6pattern="${v6pattern}:((:${s}){1,7}|:)|"
-   # TEST: fe08::7:8%eth       fe08::7:8%1                                             (link-local IPv6addresses with zone index)
-   v6pattern="${v6pattern}fe08:(:${s}){2,2}%[0-9a-zA-Z]{1,}|"
-   # TEST: ::255.255.255.255   ::ffff:255.255.255.255  ::ffff:0:255.255.255.255        (IPv4-mappedIPv6 addresses and IPv4-translated addresses)
-   v6pattern="${v6pattern}::(ffff(:0{1,4})?:)?${RE_IPV4}|"
-   # TEST: 2001:db8:3:4::192.0.2.33  64:ff9b::192.0.2.33
-   v6pattern="${v6pattern}(${s}:){1,4}:${RE_IPV4}"
-
-   # let's kill grep now
-   v=`$printf "$1" | grep -Eq "$v6pattern"` && return 1
+  p="(^0\.)|(^10\.)|(^100\.6[4-9]\.)|(^100\.[7-9]\d\.)|(^100\.1[0-1]\d\.)|(^100\.12[0-7]\.)|(^127\.)|(^169\.254\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\. )|(^172\.3[0-1]\.)|(^192\.0\.0\.)|(^192\.0\.2\.)|(^192\.88\.99\.)|(^192\.168\.)|(^198\.1[8-9]\.)|(^198\.51\.100\.)|(^203.0\.113\.)|(^22[4-9]\.)|(^23[0-9]\.)|(^24[0-9]\.)|(^25[0-4]\.)"
+  $printf "$1" |$grep -Eq "$p" && return 1 || return 0
 }
 
 ### IS_TTL_OK
 ### Option to warn user about TTL that's too high for a dynamic DNS setup.
 ### Treshold is 1 hour.
+### IN: $1 zone_ttl (string)
+### OUT: bool
+### Global dependencies: none
 function IS_TTL_LOW_ENOUGH {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    if [ "$1" -gt "3600" ]; then return 1; fi
@@ -75,9 +51,10 @@ function IS_TTL_LOW_ENOUGH {
 ### IS_MODIFIED_OUTSIDE_TTL
 ### If record has been updated outside of the TTL (a TTL time has passed since our last modification), return true
 ### (can go ahead with update)
-### Takes modification date and TTL as params.
-### NOTE: you may want to make sure your clock's ticking right for this to make sense, especially when using low values.
 ### NOTE: expecting UTC time from the API, returning false should that not be the case.
+### IN: $1 zone_ttl (string), $2 modification_time (string(date+time+timezone))
+### OUT: bool, may exit to shell (UTC expected)
+### Global dependencies: none
 function IS_MODIFIED_OUTSIDE_TTL {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # get timezone
@@ -107,8 +84,11 @@ function IS_MODIFIED_OUTSIDE_TTL {
 
 ### DOES_VALUE_MATCH_HETZNER_VALUE
 ### Confirms if our value in hatzner is actually different from what update would include.
-### This mitigates the scenario of pushing data to the API in case of a cache update (write) failure.
-### Takes three params: $2 record_value $3 value.
+### This mitigates the scenario of pushing data to the API in case of a cache
+### update (write) failure.
+### IN: $1 record_value (string), $2 value (string)
+### OUT: bool
+### Global dependencies: none
 function DOES_VALUE_MATCH_HETZNER_VALUE {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    # empty values are not accepted here
@@ -125,7 +105,9 @@ function DOES_VALUE_MATCH_HETZNER_VALUE {
 
 ### VALIDATE_JSON_DATA
 ### Function to avoid sending out malformed json to lower dependency on API json filtering.
-### Takes input: json data, returns true or false.
+### IN: none
+### OUT: bool
+### Global dependencies: finalized_json
 function VALIDATE_JSON {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
    r=`$printf -- "$finalized_json" | $jq .` 2>&1 && return 0 || return 1
@@ -134,7 +116,7 @@ function VALIDATE_JSON {
 ### IS_UPDATE_EMPTY
 ### In case we have our locally constructed value matching exactly the one in Hetzner's data
 ### we have a scenario of empty updates - this function just confirms that.
-### Takes input: $1: bulk_construct (list of arguments)
+### IN: @# bulk_construct (list of arguments)
 ### OUT: bool (our update is empty / not empty)
 function IS_EMPTY {
    _VRB1 ">> $BASH_SOURCE :: ${FUNCNAME}"; _VRB2 "INPUT(S): (`for q in ${@#}; do $printf -- $q\)\(; done`)"
