@@ -15,6 +15,55 @@ corrupt_response1="" # html
 corrupt_response2="" # redirect
 corrupt_response3="" # malformed_json
 
+# Sample data from Hetzner: https://dns.hetzner.com/api-docs/#operation/GetRecords
+api_get_all_records_response0="{
+"records": [
+{
+"type": "A",
+"id": "string",
+"created": "2020-05-17T08:33:30Z",
+"modified": "2020-05-17T08:33:30Z",
+"zone_id": "string",
+"name": "string",
+"value": "string",
+"ttl": 0
+}
+],
+"meta": {
+"pagination": {
+"page": 1,
+"per_page": 1,
+"last_page": 1,
+"total_entries": 0
+}
+}
+}"
+
+# Sample data from Hetzner: https://dns.hetzner.com/api-docs/#operation/BulkUpdateRecords
+api_bulk_update_records_response0="{
+"records": [
+{
+"type": "A",
+"id": "string",
+"created": "2020-05-17T08:33:30Z",
+"modified": "2020-05-17T08:33:30Z",
+"zone_id": "string",
+"name": "string",
+"value": "string",
+"ttl": 0
+}
+],
+"failed_records": [
+{
+"zone_id": "string",
+"type": "A",
+"name": "string",
+"value": "string",
+"ttl": 0
+}
+]
+}"
+
 bad_json_value0=""
 bad_json_value1=""
 bad_json_value2=""
@@ -53,3 +102,6 @@ ipv4_test_data_pass="
 212.40.64.243
 84.236.105.98
 "
+
+
+
