@@ -1,5 +1,10 @@
 #!/bin/bash
 
+###
+### HeTZner dynDNS
+### Run ./htzdns.sh -r to build configuration
+###
+
 # Pull functions
 if [ ! -d "${0%/*}/inc" ]; then printf "Missing ./inc/\n"; exit 1; fi
 for inc in `find ${0%/*}/inc -name "*.inc"`; do source "$inc" || { printf "Failed including $inc.\n"; exit 1; }; done
@@ -26,9 +31,8 @@ TEST_COVERAGE                   && exit 0
 current_ip=`$whatismyip`	|| _ERR "Failed determining current IP address"
 IS_VALID_IPV4 "$current_ip"	|| _ERR "IP $current_ip is not valid for A records"
 
-# Load cache, with no error scenario: we will build in case we don't have it.
+# Load & validate cache, with no error scenario: we will build in case we don't have it.
 LOAD_CACHE
-# Get invalid_cache=0/1 so we can act later on it.
 VALIDATE_CACHE
 # If this ip is the only one we have in the cache; if so, it's safe to exit (uness we want to build cache)
 IS_IP_IN_CACHE "$current_ip"	&& { if [[ "$force" != "1" ]]; then _PRETEND "Current IP is cached, not updating."; exit 0; fi; }
